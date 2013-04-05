@@ -1,9 +1,10 @@
+
 #include <stdio.h>
 #include <string.h>  // for strlen
+#include <assert.h>
 #include "zlib.h"
 
-// adapted from:
-// http://stackoverflow.com/questions/7540259/deflate-and-inflate-zlib-h-in-c
+
 int main(int argc, char* argv[])
 {   
     // original string len = 36
@@ -15,6 +16,12 @@ int main(int argc, char* argv[])
     // placeholder for the UNcompressed (inflated) version of "b"
     char c[50];
      
+
+    printf("Uncompressed size is: %lu\n", strlen(a));
+    printf("Uncompressed string is: %s\n", a);
+
+
+    printf("\n----------\n\n");
 
     // STEP 1.
     // deflate a into b. (that is, compress a into b)
@@ -35,6 +42,7 @@ int main(int argc, char* argv[])
     deflate(&defstream, Z_FINISH);
     deflateEnd(&defstream);
      
+    // This is one way of getting the size of the output
     printf("Compressed size is: %lu\n", strlen(b));
     printf("Compressed string is: %s\n", b);
     
@@ -64,6 +72,8 @@ int main(int argc, char* argv[])
     printf("Uncompressed string is: %s\n", c);
     
 
+    // make sure uncompressed is exactly equal to compressed.
+    assert(strcmp(a,c)==0);
 
     return 0;
 }
