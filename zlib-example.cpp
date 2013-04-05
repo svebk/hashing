@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
     printf("Uncompressed string is: %s\n", c);
     
 
-    // make sure uncompressed is exactly equal to compressed.
+    // make sure uncompressed is exactly equal to original.
     assert(strcmp(a,c)==0);
 
     return 0;
