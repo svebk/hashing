@@ -2,6 +2,8 @@
 #include <string.h>  // for strlen
 #include "zlib.h"
 
+// adapted from:
+// http://stackoverflow.com/questions/7540259/deflate-and-inflate-zlib-h-in-c
 int main(int argc, char* argv[])
 {   
     // original string len = 36
@@ -33,7 +35,6 @@ int main(int argc, char* argv[])
     deflate(&defstream, Z_FINISH);
     deflateEnd(&defstream);
      
-    // This is one way of getting the size of the output
     printf("Compressed size is: %lu\n", strlen(b));
     printf("Compressed string is: %s\n", b);
     
