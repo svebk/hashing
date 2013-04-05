@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
     defstream.zalloc = Z_NULL;
     defstream.zfree = Z_NULL;
     defstream.opaque = Z_NULL;
+    // setup "a" as the input and "b" as the compressed output
     defstream.avail_in = (uInt)strlen(a)+1; // size of input, string + terminator
     defstream.next_in = (Bytef *)a; // input char array
     defstream.avail_out = (uInt)sizeof(b); // size of output
@@ -47,6 +48,7 @@ int main(int argc, char* argv[])
     infstream.zalloc = Z_NULL;
     infstream.zfree = Z_NULL;
     infstream.opaque = Z_NULL;
+    // setup "b" as the input and "c" as the compressed output
     infstream.avail_in = (uInt)((char*)defstream.next_out - b); // size of input
     infstream.next_in = (Bytef *)b; // input char array
     infstream.avail_out = (uInt)sizeof(c); // size of output
