@@ -3,7 +3,7 @@
 #include <assert.h>
 #include "zlib.h"
 
-
+// adapted from: http://stackoverflow.com/questions/7540259/deflate-and-inflate-zlib-h-in-c
 int main(int argc, char* argv[])
 {   
     // original string len = 36
