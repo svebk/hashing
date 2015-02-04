@@ -297,6 +297,9 @@ int main(int argc, char** argv){
 		for (int i=0;i<top_feature;i++)
 			outputfile << postrank[i].second << ' ';
 		outputfile << endl;
+		for (int i=0;i<top_feature;i++)
+			outputfile << postrank[i].first << ' ';
+		outputfile << endl;
 		runtimes[4]+=(float)(get_wall_time() - t[1]);
 
 	}
