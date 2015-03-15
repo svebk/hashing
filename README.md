@@ -24,7 +24,6 @@ feature: <feature_size>*<feature_dimension> floats
 
 feature_dimension is hardcoded (4096).
 
-
 3. Usage: hashing feature_file_name [hashing_bits post_ranking_ratio nomarlize_features]
 feature_file_name is the file name of query feautre(s). The format is the same with feature[_norm], can query multiple features at a time.
 nomarlize_features can be 0 or 1, indicating whether the query feature(s) need to be normalized, default 1.
