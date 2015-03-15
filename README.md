@@ -1,7 +1,7 @@
 # hashing
 hashing is released under BSD. Auther: Tao Chen, generalmilk@gmail.com
 
-1. Compliing:
+1. Compling:
 make
 
 2. Before use, provide following 4 files:
