@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 	t[0] = get_wall_time(); // Start Time
 	float runtimes[6] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 	if (argc < 2){
-		cout << "Usage: hashing feature_file_name [hashing_bits post_ranking_ratio nomarlize_features read_threshold]" << std::endl;
+		cout << "Usage: hashing [hashing_bits post_ranking_ratio nomarlize_features read_threshold]" << std::endl;
 
 		return -1;
 	}
@@ -210,7 +210,7 @@ int main(int argc, char** argv){
 	outname = outname+"-sim.txt";
 	ofstream outputfile;
 	outputfile.open (outname,ios::out);
-	unsigned int * query = query_all;
+	unsigned int * query = (unsigned int*)itq.data;;
 	float * query_feature = (float*)query_mat.data;
 	runtimes[1]=(float)(get_wall_time() - t[1]);
 	for  (int k=0;k<query_num;k++)
