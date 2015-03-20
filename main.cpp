@@ -246,6 +246,7 @@ int main(int argc, char** argv){
 	for  (unsigned long long int k=0;k<query_num;k++)
 	{
 		//hashing
+		cout<<k<<"in"<<query_num<<endl;
 		unsigned int * hash_data= (unsigned int*)itq.data;
 		t[1]=get_wall_time();
 		for (int i=0;i<data_num;i++)
