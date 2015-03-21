@@ -231,7 +231,8 @@ int main(int argc, char** argv){
 
 	vector<mypair> hamming(data_num);
 	vector<mypairf> postrank(top_feature);
-	outname.resize(outname.size()-4);
+	if (!pw)
+		outname.resize(outname.size()-4);
 	outname = outname+"-sim.txt";
 	ofstream outputfile;
 	outputfile.open (outname,ios::out);
