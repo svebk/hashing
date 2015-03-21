@@ -18,7 +18,7 @@ double get_wall_time(){
     return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
 #endif
-const string currentDateTime() {
+const std::string currentDateTime() {
 	time_t     now = time(0);
 	struct tm  tstruct;
 	char       buf[80];
