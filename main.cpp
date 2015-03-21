@@ -2,16 +2,9 @@
 #include <omp.h>
 //#include <vl/generic.h>
 
-#include <opencv2/opencv.hpp>
-
-//#include <math.h>
-#include <fstream>
-
-
-using namespace std;
-using namespace cv;
 
 template<class ty>
+
 void normalize(ty *X, size_t dim)
 {
 	ty sum = 0;
@@ -26,6 +19,7 @@ void normalize(ty *X, size_t dim)
 		X[i] *= n;
 	}
 }
+
 int NumberOfSetBits(unsigned int i)
 {
 	i = i - ((i >> 1) & 0x55555555);
@@ -76,7 +70,7 @@ int main(int argc, char** argv){
 	}
 	omp_set_num_threads(omp_get_max_threads());
 
-
+	//cout<<UINT_MAX<<endl;
 	// hardcoded
 	int feature_dim = 4096;
 	float ratio = 0.01f;
@@ -101,7 +95,7 @@ int main(int argc, char** argv){
 	string W_name = "W_" + str_norm + bit_string;
 	string mvec_name = "mvec_" + str_norm + bit_string;
 
-
+	
 
 	// read in itq
 	unsigned long long int data_num = (unsigned long long int)filesize(itq_name)*8/bit_num;
@@ -141,7 +135,7 @@ int main(int argc, char** argv){
 
 	//read in query phrase 1
 	string outname = argv[1];
-	unsigned long long int	query_num;
+	int query_num;
 	Mat query_mat;
 	bool pw=false;
 	if (outname=="pairwise")
@@ -243,9 +237,11 @@ int main(int argc, char** argv){
 	outputfile.open (outname,ios::out);
 	 
 	runtimes[1]=(float)(get_wall_time() - t[1]);
-	for  (unsigned long long int k=0;k<query_num;k++)
+	for  (int k=0;k<query_num;k++)
 	{
 		//hashing
+		if (k%1000==0&&k>0)
+			cout<<currentDateTime() << " " <<k<<endl;
 		//cout<<k<<" in "<<query_num<<endl;
 		unsigned int * hash_data= (unsigned int*)itq.data;
 		t[1]=get_wall_time();
@@ -260,12 +256,12 @@ int main(int argc, char** argv){
 			hash_data += int_num;
 		}
 		//cout << "what" <<hamming[2757278].first << std::endl;
-		cout<<"not bad"<<endl;
+		//cout<<"not bad"<<endl;
 
 		std::sort(hamming.begin(),hamming.end(),comparator);
 		query += int_num;
 		runtimes[2]+=(float)(get_wall_time() - t[1]);
-		cout<<"lucky"<<endl;
+		//cout<<"lucky"<<endl;
 		//read needed feature
 		if (query_num<=read_thres && !pw)
 		{
@@ -294,7 +290,7 @@ int main(int argc, char** argv){
 			{
 				postrank[i]= mypairf(1.0f,hamming[i].second);
 				if (query_num>read_thres||pw)
-					data_feature = (float*)feature.data+feature_dim*postrank[i].second;
+					data_feature = (float*)feature.data+(unsigned long long int)feature_dim*postrank[i].second;
 				else
 					data_feature = (float*)feature.data+feature_dim*i;
 
@@ -310,7 +306,7 @@ int main(int argc, char** argv){
 			{
 				postrank[i]= mypairf(0.0f,hamming[i].second);
 				if (query_num>read_thres||pw)
-					data_feature = (float*)feature.data+feature_dim*postrank[i].second;
+					data_feature = (float*)feature.data+(unsigned long long int)feature_dim*postrank[i].second;
 				else
 					data_feature = (float*)feature.data+feature_dim*i;
 
@@ -321,7 +317,7 @@ int main(int argc, char** argv){
 				//postrank[i].first= sqrt(postrank[i].first);
 			}
 		}
-		cout<<"very lucky"<<endl;
+		//cout<<"very lucky"<<endl;
 
 		std::sort(postrank.begin(),postrank.end(),comparatorf);
 		query_feature +=feature_dim;
@@ -338,7 +334,6 @@ int main(int argc, char** argv){
 			outputfile << postrank[i].first << ' ';
 		outputfile << endl;
 		runtimes[4]+=(float)(get_wall_time() - t[1]);
-		cout<<"wtf lucky"<<endl;
 
 	}
 	
