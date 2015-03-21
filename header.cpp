@@ -1,7 +1,6 @@
 #ifdef _WIN32
 #include <time.h>
 #include "header.h"
-#include <string>
 
 double get_wall_time(){
     double t = (double)clock()/CLOCKS_PER_SEC;
@@ -19,7 +18,7 @@ double get_wall_time(){
     return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
 #endif
-const string currentDateTime() {
+const std::string currentDateTime() {
 	time_t     now = time(0);
 	struct tm  tstruct;
 	char       buf[80];

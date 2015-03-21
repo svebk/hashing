@@ -2,7 +2,8 @@
 #include <omp.h>
 //#include <vl/generic.h>
 
-
+using namespace cv;
+using namespace std;
 template<class ty>
 
 void normalize(ty *X, size_t dim)

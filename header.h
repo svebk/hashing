@@ -6,7 +6,6 @@
 #include <fstream>
 
 
-using namespace cv;
-using namespace std;
-const string currentDateTime();
+
+const std::string currentDateTime();
 double get_wall_time();
