@@ -69,8 +69,8 @@ int main(int argc, char** argv){
 
 		return -1;
 	}
-	omp_set_num_threads(omp_get_max_threads());
-
+	omp_set_num_threads(omp_get_max_threads()/2);
+	cout<<"num of threads: "<<omp_get_max_threads()<<endl;
 	//cout<<UINT_MAX<<endl;
 	// hardcoded
 	int feature_dim = 4096;
@@ -194,9 +194,9 @@ int main(int argc, char** argv){
 	//hashing init
 	t[1]=get_wall_time();
 
-	unsigned int * query,*query_all;
+	unsigned int *query_all;
 	query_all = new unsigned int[1];
-	float * query_feature;
+	float * query_feature_all;
 	if (!pw)
 	{
 		if (norm)
@@ -221,17 +221,16 @@ int main(int argc, char** argv){
 						query_all[k*int_num+i] += 1<<j;
 			}
 		}
-		query = query_all;
-		query_feature = (float*)query_mat.data;
+		query_feature_all = (float*)query_mat.data;
 	}
 	else
 	{
-		query = (unsigned int*)itq.data;
-		query_feature = (float*)feature.data;
+		delete[] query_all;
+		query_all = (unsigned int*)itq.data;
+		query_feature_all = (float*)feature.data;
 	}
 
-	vector<mypair> hamming(data_num);
-	vector<mypairf> postrank(top_feature);
+
 	if (!pw)
 		outname.resize(outname.size()-4);
 	outname = outname+"-sim.txt";
@@ -239,116 +238,140 @@ int main(int argc, char** argv){
 	outputfile.open (outname,ios::out);
 	 
 	runtimes[1]=(float)(get_wall_time() - t[1]);
-	for  (int k=0;k<query_num;k++)
+	double tmptime = get_wall_time();
+	int batch_size = 1024;
+	int iteration = (int)ceil(query_num/(double)batch_size);
+	int outnum = top_feature;
+	if (pw)
+		outnum = 30;
+	for (int iter = 0;iter <iteration;iter++)
 	{
-		//hashing
-		if (k%1000==0&&k>0)
-			cout<<currentDateTime() << " " <<k<<endl;
-		//cout<<k<<" in "<<query_num<<endl;
-		unsigned int * hash_data= (unsigned int*)itq.data;
-		t[1]=get_wall_time();
-		for (int i=0;i<data_num;i++)
+		int start = batch_size*iter;
+		int end = min(batch_size*(iter+1),query_num);
+		int len = end-start;
+		vector<vector<int>> result_idx;
+		vector<vector<mypairf>> postranks(len,vector<mypairf>(top_feature));
+		cout<<(float)(get_wall_time() - tmptime)<< " " <<start<<endl;
+		tmptime = get_wall_time();
+
+#pragma omp parallel for
+		for  (int k=start;k<end;k++)
 		{
-			hamming[i] = mypair(0,i);
-			for (int j=0;j<int_num;j++)
+			//hashing
+			int sub_id = k-start;
+			unsigned int * query = query_all+(unsigned long long int)k*int_num;
+			vector<mypair> hamming(data_num);
+			//vector<mypairf> postrank(top_feature);
+			//cout<<k<<" in "<<query_num<<endl;
+			unsigned int * hash_data= (unsigned int*)itq.data;
+			//t[1]=get_wall_time();
+			for (int i=0;i<data_num;i++)
 			{
-				unsigned int xnor = query[j]^hash_data[j];
-				hamming[i].first += NumberOfSetBits(xnor);
-			}
-			hash_data += int_num;
-		}
-		//cout << "what" <<hamming[2757278].first << std::endl;
-		//cout<<"not bad"<<endl;
-
-		std::sort(hamming.begin(),hamming.end(),comparator);
-		query += int_num;
-		runtimes[2]+=(float)(get_wall_time() - t[1]);
-		//cout<<"lucky"<<endl;
-		//read needed feature
-		if (query_num<=read_thres && !pw)
-		{
-			t[1]=get_wall_time();
-			char* feature_p = (char*)feature.data;
-			//cout << "what" <<hamming[1].first <<" "<<hamming[1].second << std::endl;
-			//cout << (unsigned int)(hamming[0].second)*4*feature_dim <<endl;
-			for (int i=0;i<top_feature;i++)
-			{
-				read_in.seekg((unsigned long long int)(hamming[i].second)*4*feature_dim);
-				//cout<<read_in.tellg()<<endl;
-				read_in.read(feature_p, read_size);
-				feature_p +=read_size;
-			}
-
-			runtimes[0]+=(float)(get_wall_time() - t[1]);
-		}
-
-
-		//post ranking
-		t[1]=get_wall_time();
-		float* data_feature;
-		if (norm)
-		{
-			for (int i=0;i<top_feature;i++)
-			{
-				postrank[i]= mypairf(1.0f,hamming[i].second);
-				if (query_num>read_thres||pw)
-					data_feature = (float*)feature.data+(unsigned long long int)feature_dim*postrank[i].second;
-				else
-					data_feature = (float*)feature.data+feature_dim*i;
-
-				for (int j=0;j<feature_dim;j++)
+				hamming[i] = mypair(0,i);
+				for (int j=0;j<int_num;j++)
 				{
-					postrank[i].first-=query_feature[j]*data_feature[j];
+					unsigned int xnor = query[j]^hash_data[j];
+					hamming[i].first += NumberOfSetBits(xnor);
+				}
+				hash_data += int_num;
+			}
+			//cout << "what" <<hamming[2757278].first << std::endl;
+			//cout<<"not bad"<<endl;
+
+			std::sort(hamming.begin(),hamming.end(),comparator);
+			//runtimes[2]+=(float)(get_wall_time() - t[1]);
+			//cout<<"lucky"<<endl;
+			//read needed feature
+			if (query_num<=read_thres && !pw)
+			{
+				//t[1]=get_wall_time();
+				char* feature_p = (char*)feature.data;
+				//cout << "what" <<hamming[1].first <<" "<<hamming[1].second << std::endl;
+				//cout << (unsigned int)(hamming[0].second)*4*feature_dim <<endl;
+				for (int i=0;i<top_feature;i++)
+				{
+					read_in.seekg((unsigned long long int)(hamming[i].second)*4*feature_dim);
+					//cout<<read_in.tellg()<<endl;
+					read_in.read(feature_p, read_size);
+					feature_p +=read_size;
+				}
+
+				//runtimes[0]+=(float)(get_wall_time() - t[1]);
+			}
+
+
+			//post ranking
+			//t[1]=get_wall_time();
+			float* data_feature;
+			float* query_feature = query_feature_all+(unsigned long long int)feature_dim*k;
+			if (norm)
+			{
+				for (int i=0;i<top_feature;i++)
+				{
+					postranks[sub_id][i]= mypairf(1.0f,hamming[i].second);
+					if (query_num>read_thres||pw)
+						data_feature = (float*)feature.data+(unsigned long long int)feature_dim*postranks[sub_id][i].second;
+					else
+						data_feature = (float*)feature.data+feature_dim*i;
+
+					for (int j=0;j<feature_dim;j++)
+					{
+						postranks[sub_id][i].first-=query_feature[j]*data_feature[j];
+					}
 				}
 			}
-		}
-		else
-		{
-			for (int i=0;i<top_feature;i++)
+			else
 			{
-				postrank[i]= mypairf(0.0f,hamming[i].second);
-				if (query_num>read_thres||pw)
-					data_feature = (float*)feature.data+(unsigned long long int)feature_dim*postrank[i].second;
-				else
-					data_feature = (float*)feature.data+feature_dim*i;
-
-				for (int j=0;j<feature_dim;j++)
+				for (int i=0;i<top_feature;i++)
 				{
-					postrank[i].first+=pow(query_feature[j]-data_feature[j],2);
-				}
-				//postrank[i].first= sqrt(postrank[i].first);
-			}
-		}
-		//cout<<"very lucky"<<endl;
+					postranks[sub_id][i]= mypairf(0.0f,hamming[i].second);
+					if (query_num>read_thres||pw)
+						data_feature = (float*)feature.data+(unsigned long long int)feature_dim*postranks[sub_id][i].second;
+					else
+						data_feature = (float*)feature.data+feature_dim*i;
 
-		std::sort(postrank.begin(),postrank.end(),comparatorf);
-		query_feature +=feature_dim;
-		runtimes[3]+=(float)(get_wall_time() - t[1]);
-		//cout << postrank[0].second << std::endl;
-		//output
-		t[1]=get_wall_time();
-		int outnum = top_feature;
-		if (pw)
-			outnum = 30;
-		for (int i=0;i<outnum;i++)
-			outputfile << postrank[i].second << ' ';
-		for (int i=0;i<outnum;i++)
-			outputfile << postrank[i].first << ' ';
-		outputfile << endl;
-		runtimes[4]+=(float)(get_wall_time() - t[1]);
+					for (int j=0;j<feature_dim;j++)
+					{
+						postranks[sub_id][i].first+=pow(query_feature[j]-data_feature[j],2);
+					}
+					//postrank[i].first= sqrt(postrank[i].first);
+				}
+			}
+			//cout<<"very lucky"<<endl;
+
+			std::sort(postranks[sub_id].begin(),postranks[sub_id].end(),comparatorf);
+			//runtimes[3]+=(float)(get_wall_time() - t[1]);
+			//cout << postrank[0].second << std::endl;
+			//output
+			//t[1]=get_wall_time();
+
+
+			//runtimes[4]+=(float)(get_wall_time() - t[1]);
+
+		}
+		for (int sub_id = 0;sub_id<len;sub_id++)
+		{
+			for (int i=0;i<outnum;i++)
+				outputfile << postranks[sub_id][i].second << ' ';
+			for (int i=0;i<outnum;i++)
+				outputfile << postranks[sub_id][i].first << ' ';
+			outputfile << endl;
+		}
 
 	}
-	
-	delete[] query_all;
+
+	if (!pw)
+		delete[] query_all;
 	outputfile.close();
 	read_in.close();
 
-	cout << "loading (seconds): " << runtimes[0] << std::endl;
-	cout << "hashing init (seconds): " << runtimes[1] << std::endl;
-	cout << "hashing (seconds): " << runtimes[2] << std::endl;
-	cout << "post ranking (seconds): " << runtimes[3] << std::endl;
-	cout << "output (seconds): " << runtimes[4] << std::endl;
+	//cout << "loading (seconds): " << runtimes[0] << std::endl;
+	//cout << "hashing init (seconds): " << runtimes[1] << std::endl;
+	//cout << "hashing (seconds): " << runtimes[2] << std::endl;
+	//cout << "post ranking (seconds): " << runtimes[3] << std::endl;
+	//cout << "output (seconds): " << runtimes[4] << std::endl;
 	cout << "total time (seconds): " << (float)(get_wall_time() - t[0]) << std::endl;
 	return 0;
 }
+
 
