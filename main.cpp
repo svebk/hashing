@@ -44,33 +44,14 @@ ifstream::pos_type filesize(string filename)
 	return in.tellg(); 
 }
 
-int countHammDist(unsigned int n, unsigned int m)
-{
-	int i=0;
-	unsigned int count = 0 ;
-	for(i=0; i<8; i++){
-		if ((n&1) != (m&1)){
-			count++;
-		}
-		n >>= 1;
-		m >>= 1;
 
-	}
-	return count;
-}
-typedef std::pair<int,int> mypair;
-typedef std::pair<float,int> mypairf;
 
-bool comparator ( const mypair & l, const mypair & r)
-{ return l.first < r.first; }
-bool comparatorf ( const mypairf & l, const mypairf & r)
-{ return l.first < r.first; }
 int main(int argc, char** argv){
 	double t[2]; // timing
 	t[0] = get_wall_time(); // Start Time
 	float runtimes[6] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
-	if (argc < 2){
-		cout << "Usage: hashing feature_file_name [hashing_bits post_ranking_ratio nomarlize_features read_threshold]" << std::endl;
+	if (argc < 3){
+		cout << "Usage: hashing feature_file_name feature_number [hashing_bits ]" << std::endl;
 
 		return -1;
 	}
@@ -79,30 +60,20 @@ int main(int argc, char** argv){
 
 	// hardcoded
 	int feature_dim = 4096;
-	float ratio = 0.01f;
 	int bit_num = 256;
 	int norm = true;
-	if (argc>2)
-		bit_num = atoi(argv[2]);
 	if (argc>3)
-		ratio = (float)atof(argv[3]);
-	if (argc>4)
-		norm = atoi(argv[4]);
-
-	int read_thres = (int)(1.0f/ratio);
-	if (argc>5)
-		read_thres =  atoi(argv[5]);
+		bit_num = atoi(argv[3]);
 	int int_num = bit_num/32;
 	string bit_string = to_string((long long)bit_num);
 	string str_norm = "";
 	if (norm)
 		str_norm = "norm_";
-	string itq_name = "itq_" + str_norm + bit_string;
 	string W_name = "W_" + str_norm + bit_string;
 	string mvec_name = "mvec_" + str_norm + bit_string;
 
 	//read in query
-	int	query_num = (int)filesize(argv[1])/4/feature_dim;
+	int query_num = atoi(argv[2]);
 	ifstream read_in(argv[1],ios::in|ios::binary);
 	if (!read_in.is_open())
 	{
@@ -114,20 +85,7 @@ int main(int argc, char** argv){
 	read_in.read((char*)query_mat.data, read_size);
 	read_in.close();
 
-	// read in itq
-	unsigned long long int data_num = (unsigned long long int)filesize(itq_name)*8/bit_num;
-	int top_feature=(int)ceil(data_num*ratio);
-
-	read_in.open(itq_name,ios::in|ios::binary);
-	if (!read_in.is_open())
-	{
-		std::cout << "Cannot load the itq model!" << std::endl;
-		return -1;
-	}
-	Mat itq(data_num,int_num,CV_32SC1);
-	read_size = sizeof(int)*data_num*int_num;
-	read_in.read((char*)itq.data, read_size);
-	read_in.close();
+	//read in model
 
 	read_in.open(W_name,ios::in|ios::binary);
 	if (!read_in.is_open())
@@ -151,28 +109,6 @@ int main(int argc, char** argv){
 	read_in.read((char*)mvec.data, read_size);
 	read_in.close();
 
-	//read in feature
-	if (norm)
-		read_in.open("feature_norm",ios::in|ios::binary);
-	else
-		read_in.open("feature",ios::in|ios::binary);
-	if (!read_in.is_open())
-	{
-		std::cout << "Cannot load the feature file!" << std::endl;
-		return -1;
-	}
-	Mat feature;
-	if (query_num>read_thres)
-	{
-		feature.create(data_num,feature_dim,CV_32F);
-		read_size = sizeof(float)*data_num*feature_dim;
-		read_in.read((char*)feature.data, read_size);
-	}
-	else
-	{
-		feature.create(top_feature,feature_dim,CV_32F);
-		read_size = sizeof(float)*feature_dim;
-	}
 
 	runtimes[0]=(float)(get_wall_time() - t[0]);
 
@@ -203,114 +139,41 @@ int main(int argc, char** argv){
 					query_all[k*int_num+i] += 1<<j;
 		}
 	}
-	vector<mypair> hamming(data_num);
-	vector<mypairf> postrank(top_feature);
-	string outname = argv[1];
-	outname.resize(outname.size()-4);
-	outname = outname+"-sim.txt";
-	ofstream outputfile;
-	outputfile.open (outname,ios::out);
-	unsigned int * query = query_all;
-	float * query_feature = (float*)query_mat.data;
-	runtimes[1]=(float)(get_wall_time() - t[1]);
-	for  (int k=0;k<query_num;k++)
+
+	string filename = argv[1];
+	filename.resize(filename.size()-4);
+	string outname = filename;
+	if (norm)
+		outname = outname + "_norm";
+	ofstream write_out(outname,ios::out|ios::binary);
+	if (!write_out.is_open())
 	{
-		//hashing
-		unsigned int * hash_data= (unsigned int*)itq.data;
-		t[1]=get_wall_time();
-		for (int i=0;i<data_num;i++)
-		{
-			hamming[i] = mypair(0,i);
-			for (int j=0;j<int_num;j++)
-			{
-				unsigned int xnor = query[j]^hash_data[j];
-				hamming[i].first += NumberOfSetBits(xnor);
-			}
-			hash_data += int_num;
-		}
-		//cout << "what" <<hamming[2757278].first << std::endl;
-		std::sort(hamming.begin(),hamming.end(),comparator);
-		query += int_num;
-		runtimes[2]+=(float)(get_wall_time() - t[1]);
-
-		//read needed feature
-		if (query_num<=read_thres)
-		{
-			t[1]=get_wall_time();
-			char* feature_p = (char*)feature.data;
-			//cout << "what" <<hamming[1].first <<" "<<hamming[1].second << std::endl;
-			//cout << (unsigned int)(hamming[0].second)*4*feature_dim <<endl;
-			for (int i=0;i<top_feature;i++)
-			{
-				read_in.seekg((unsigned long long int)(hamming[i].second)*4*feature_dim);
-				//cout<<read_in.tellg()<<endl;
-				read_in.read(feature_p, read_size);
-				feature_p +=read_size;
-			}
-
-			runtimes[0]+=(float)(get_wall_time() - t[1]);
-		}
-
-
-		//post ranking
-		t[1]=get_wall_time();
-		float* data_feature;
-		if (norm)
-		{
-			for (int i=0;i<top_feature;i++)
-			{
-				postrank[i]= mypairf(1.0f,hamming[i].second);
-				if (query_num>read_thres)
-					data_feature = (float*)feature.data+feature_dim*postrank[i].second;
-				else
-					data_feature = (float*)feature.data+feature_dim*i;
-
-				for (int j=0;j<feature_dim;j++)
-				{
-					postrank[i].first-=query_feature[j]*data_feature[j];
-				}
-			}
-		}
-		else
-		{
-			for (int i=0;i<top_feature;i++)
-			{
-				postrank[i]= mypairf(0.0f,hamming[i].second);
-				if (query_num>read_thres)
-					data_feature = (float*)feature.data+feature_dim*postrank[i].second;
-				else
-					data_feature = (float*)feature.data+feature_dim*i;
-
-				for (int j=0;j<feature_dim;j++)
-				{
-					postrank[i].first+=pow(query_feature[j]-data_feature[j],2);
-				}
-				//postrank[i].first= sqrt(postrank[i].first);
-			}
-		}
-		std::sort(postrank.begin(),postrank.end(),comparatorf);
-		query_feature +=feature_dim;
-		runtimes[3]+=(float)(get_wall_time() - t[1]);
-		//cout << postrank[0].second << std::endl;
-		//output
-		t[1]=get_wall_time();
-		for (int i=0;i<top_feature;i++)
-			outputfile << postrank[i].second << ' ';
-		for (int i=0;i<top_feature;i++)
-			outputfile << postrank[i].first << ' ';
-		outputfile << endl;
-		runtimes[4]+=(float)(get_wall_time() - t[1]);
-
+		std::cout << "Cannot open the output feature file for writing!" << std::endl;
+		return -1;
 	}
+	size_t write_size = sizeof(float)*feature_dim*query_num;
+	write_out.write((char*)query_mat.data, write_size);
+	write_out.close();
+
+	string itq_name = filename+ "_itq_" + str_norm + bit_string;
+	write_out.open(itq_name,ios::out|ios::binary);
+	if (!write_out.is_open())
+	{
+		std::cout << "Cannot open the output hashing file for writing!" << std::endl;
+		return -1;
+	}
+	write_size = sizeof(int)*query_num*int_num;
+	write_out.write((char*)query_all, write_size);
+	write_out.close();
+
+
+	runtimes[1]=(float)(get_wall_time() - t[1]);
+
 	delete[] query_all;
-	outputfile.close();
 	read_in.close();
 
 	cout << "loading (seconds): " << runtimes[0] << std::endl;
 	cout << "hashing init (seconds): " << runtimes[1] << std::endl;
-	cout << "hashing (seconds): " << runtimes[2] << std::endl;
-	cout << "post ranking (seconds): " << runtimes[3] << std::endl;
-	cout << "output (seconds): " << runtimes[4] << std::endl;
 	cout << "total time (seconds): " << (float)(get_wall_time() - t[0]) << std::endl;
 	return 0;
 }
