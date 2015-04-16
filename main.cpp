@@ -65,6 +65,20 @@ bool comparator ( const mypair & l, const mypair & r)
 { return l.first < r.first; }
 bool comparatorf ( const mypairf & l, const mypairf & r)
 { return l.first < r.first; }
+
+int get_file_pos(int * accum, int query, int & res)
+{
+	int file_id = 0;	
+	while (query >= accum[file_id])
+	{
+		file_id++;
+	}
+	if (!file_id)
+		res = query;
+	else
+		res = query-accum[file_id-1];
+	return file_id;
+}
 int main(int argc, char** argv){
 	double t[2]; // timing
 	t[0] = get_wall_time(); // Start Time
@@ -114,8 +128,43 @@ int main(int argc, char** argv){
 	read_in.read((char*)query_mat.data, read_size);
 	read_in.close();
 
+	//config update
+	string line;
+	vector<string> update_hash_files;
+	vector<string> update_feature_files;
+	string update_hash_prefix = "update/hash_bits/";
+	string update_feature_prefix = "update/features/";
+	string update_hash_suffix = "";
+	string update_feature_suffix = "";
+	if (norm)
+	{
+		update_hash_suffix = "_" + itq_name;
+		update_feature_suffix = "_norm";
+	}
+	ifstream fu("update_list.txt",ios::in);
+	if (!fu.is_open())
+	{
+		std::cout << "no update" << std::endl;
+	}
+	else
+	{
+		while (getline(fu, line)) {
+			update_hash_files.push_back(update_hash_prefix+line+update_hash_suffix);
+			update_feature_files.push_back(update_feature_prefix+line+update_feature_suffix);
+
+		}
+	}
+	vector<ifstream*> read_in_features;
 	// read in itq
-	unsigned long long int data_num = (unsigned long long int)filesize(itq_name)*8/bit_num;
+	vector<unsigned long long int> data_nums;
+	data_nums.push_back((unsigned long long int)filesize(itq_name)*8/bit_num);
+	unsigned long long int data_num=data_nums[0];
+	for (int i=0;i<update_hash_files.size();i++)
+	{
+		data_nums.push_back((unsigned long long int)filesize(update_hash_files[i])*8/bit_num);
+		data_num +=data_nums[i+1];
+	}
+
 	int top_feature=(int)ceil(data_num*ratio);
 
 	read_in.open(itq_name,ios::in|ios::binary);
@@ -125,9 +174,23 @@ int main(int argc, char** argv){
 		return -1;
 	}
 	Mat itq(data_num,int_num,CV_32SC1);
-	read_size = sizeof(int)*data_num*int_num;
+	read_size = sizeof(int)*data_nums[0]*int_num;
 	read_in.read((char*)itq.data, read_size);
 	read_in.close();
+	char * read_pos = (char*)itq.data+ read_size;
+	for (int i=0;i<update_hash_files.size();i++)
+	{
+		read_in.open(update_hash_files[i],ios::in|ios::binary);
+		if (!read_in.is_open())
+		{
+			std::cout << "Cannot load the itq updates!" << std::endl;
+			return -1;
+		}
+		read_size = sizeof(int)*data_nums[i+1]*int_num;
+		read_in.read(read_pos, read_size);
+		read_in.close();
+		read_pos +=read_size;
+	} 
 
 	read_in.open(W_name,ios::in|ios::binary);
 	if (!read_in.is_open())
@@ -165,13 +228,40 @@ int main(int argc, char** argv){
 	if (query_num>read_thres)
 	{
 		feature.create(data_num,feature_dim,CV_32F);
-		read_size = sizeof(float)*data_num*feature_dim;
+		read_size = sizeof(float)*data_nums[0]*feature_dim;
 		read_in.read((char*)feature.data, read_size);
+		read_in.close();
+		read_pos = (char*)feature.data+ read_size;
+		for (int i=0;i<update_feature_files.size();i++)
+		{
+			read_in.open(update_feature_files[i],ios::in|ios::binary);
+			if (!read_in.is_open())
+			{
+				std::cout << "Cannot load the feature updates!" << std::endl;
+				return -1;
+			}
+			read_size = sizeof(float)*data_nums[i+1]*feature_dim;
+			read_in.read(read_pos, read_size);
+			read_in.close();
+			read_pos +=read_size;
+		} 
 	}
 	else
 	{
+		
 		feature.create(top_feature,feature_dim,CV_32F);
 		read_size = sizeof(float)*feature_dim;
+		read_in_features.push_back(&read_in);
+		for (int i=0;i<update_feature_files.size();i++)
+		{
+			read_in_features.push_back(new ifstream);
+			read_in_features[i+1]->open(update_feature_files[i],ios::in|ios::binary);
+			if (!read_in_features[i+1]->is_open())
+			{
+				std::cout << "Cannot load the feature updates!" << std::endl;
+				return -1;
+			}
+		} 
 	}
 
 	runtimes[0]=(float)(get_wall_time() - t[0]);
@@ -240,14 +330,22 @@ int main(int argc, char** argv){
 			char* feature_p = (char*)feature.data;
 			//cout << "what" <<hamming[1].first <<" "<<hamming[1].second << std::endl;
 			//cout << (unsigned int)(hamming[0].second)*4*feature_dim <<endl;
+			int * accum = new int[data_nums.size()];
+			accum[0]=data_nums[0];
+			for (int i=1;i<data_nums.size();i++)
+			{
+				accum[i]=accum[i-1]+data_nums[i];
+			}
 			for (int i=0;i<top_feature;i++)
 			{
-				read_in.seekg((unsigned long long int)(hamming[i].second)*4*feature_dim);
+				int new_pos,file_id;
+				file_id= get_file_pos(accum,hamming[i].second,new_pos);
+				read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*4*feature_dim);
 				//cout<<read_in.tellg()<<endl;
-				read_in.read(feature_p, read_size);
+				read_in_features[file_id]->read(feature_p, read_size);
 				feature_p +=read_size;
 			}
-
+			delete[] accum;
 			runtimes[0]+=(float)(get_wall_time() - t[1]);
 		}
 
