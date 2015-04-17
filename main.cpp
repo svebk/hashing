@@ -403,6 +403,11 @@ int main(int argc, char** argv){
 	delete[] query_all;
 	outputfile.close();
 	read_in.close();
+	for (int i = 1; i<data_nums.size();i++)
+	{
+		read_in_features[i]->close();
+		delete read_in_features[i];
+	}
 
 	cout << "loading (seconds): " << runtimes[0] << std::endl;
 	cout << "hashing init (seconds): " << runtimes[1] << std::endl;
