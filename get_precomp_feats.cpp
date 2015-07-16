@@ -140,7 +140,7 @@ int main(int argc, char** argv){
 			} 
 	}
 
-	char* feature_cp = (char*)feature.data;
+	char* feature_cp = (char*)feature;
 	int * accum = new int[data_nums.size()];
 	accum[0]=data_nums[0];
 	for (int i=1;i<data_nums.size();i++)
