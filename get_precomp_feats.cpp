@@ -137,8 +137,7 @@ int main(int argc, char** argv){
 			{
 				std::cout << "Cannot load the feature updates!" << std::endl;
 				return -1;
-			}
-		} 
+			} 
 	}
 
 	float* feature_p = (float*)feature;
