@@ -153,9 +153,10 @@ int main(int argc, char** argv){
 	{
 		int new_pos,file_id;
 		std::cout << "Looking for feature #" << query_ids[i] << std::endl;
-		file_id= get_file_pos(accum,query_ids[i],new_pos);
-		//read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*sizeof(float)*feature_dim);
-		read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*4*feature_dim);
+		file_id= get_file_pos(accum,query_ids[i]-1,new_pos);
+		std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
+		read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*sizeof(float)*feature_dim);
+		//read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*4*feature_dim);
 		//cout<<read_in.tellg()<<endl;
 		read_in_features[file_id]->read(feature_cp, read_size);
 		feature_cp +=read_size;
