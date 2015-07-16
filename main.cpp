@@ -117,6 +117,7 @@ int main(int argc, char** argv){
 
 	//read in query
 	int	query_num = (int)filesize(argv[1])/4/feature_dim;
+	std::cout << "Hashing for " << query_num << " queries." << std::endl;
 	ifstream read_in(argv[1],ios::in|ios::binary);
 	if (!read_in.is_open())
 	{

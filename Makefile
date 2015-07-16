@@ -14,7 +14,7 @@ hashing: main.o header.o
 main.o: main.cpp header.h
 	$(CC) $(CFLAGS) main.cpp -o main.o -fopenmp
 
-main.o: get_precomp_feats.cpp header.h
+get_precomp_feats.o: get_precomp_feats.cpp header.h
 	$(CC) $(CFLAGS) get_precomp_feats.cpp -o get_precomp_feats.o -fopenmp
 
 header.o: header.cpp header.h 
@@ -22,6 +22,6 @@ header.o: header.cpp header.h
 
 
 clean:
-	rm -rf *o hashing
+	rm -rf *o hashing get_precomp_feats
 
 

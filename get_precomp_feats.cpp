@@ -152,7 +152,7 @@ int main(int argc, char** argv){
 	for (int i=0;i<query_num;i++)
 	{
 		int new_pos,file_id;
-		std::cout << "Looking for feature #" << str(query_ids[i]) << std::endl;
+		std::cout << "Looking for feature #" << query_ids[i] << std::endl;
 		file_id= get_file_pos(accum,query_ids[i],new_pos);
 		//read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*sizeof(float)*feature_dim);
 		read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*4*feature_dim);
