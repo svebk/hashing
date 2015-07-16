@@ -140,7 +140,7 @@ int main(int argc, char** argv){
 			} 
 	}
 
-	float* feature_p = (float*)feature;
+	char* feature_cp = (char*)feature.data;
 	int * accum = new int[data_nums.size()];
 	accum[0]=data_nums[0];
 	for (int i=1;i<data_nums.size();i++)
@@ -156,8 +156,8 @@ int main(int argc, char** argv){
 		//read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*sizeof(float)*feature_dim);
 		read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*4*feature_dim);
 		//cout<<read_in.tellg()<<endl;
-		read_in_features[file_id]->read(feature_p, read_size);
-		feature_p +=read_size;
+		read_in_features[file_id]->read(feature_cp, read_size);
+		feature_cp +=read_size;
 	}
 	
 	delete[] accum;
