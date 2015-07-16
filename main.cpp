@@ -307,6 +307,7 @@ int main(int argc, char** argv){
 	runtimes[1]=(float)(get_wall_time() - t[1]);
 	for  (int k=0;k<query_num;k++)
 	{
+		std::cout <<  "Looking for similar images of query #" << k+1 << std::endl;
 		//hashing
 		unsigned int * hash_data= (unsigned int*)itq.data;
 		t[1]=get_wall_time();
