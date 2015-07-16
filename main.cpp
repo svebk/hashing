@@ -127,6 +127,7 @@ int main(int argc, char** argv){
 	Mat query_mat(query_num,feature_dim,CV_32F);
 	size_t read_size = sizeof(float)*feature_dim*query_num;
 	read_in.read((char*)query_mat.data, read_size);
+	std::cout << "Read " << read_size <<  " bytes for " << query_num << " queries." << std::endl;
 	read_in.close();
 
 	//config update
