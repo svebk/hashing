@@ -173,7 +173,7 @@ int main(int argc, char** argv){
 
 	// write out features to out_file
 	ofstream output(out_file,ofstream::binary);
-	float* feature_p = (float*)feature;
+	char* feature_cp = (char*)feature;
 	for (int i = 0; i<query_num; i++) {
 		output.write(feature_p,read_size);
 		feature_p +=  read_size;
