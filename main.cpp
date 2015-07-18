@@ -305,6 +305,7 @@ int main(int argc, char** argv){
 	unsigned int * query = query_all;
 	float * query_feature = (float*)query_mat.data;
 	runtimes[1]=(float)(get_wall_time() - t[1]);
+	// Parallelize this for batch processing.
 	for  (int k=0;k<query_num;k++)
 	{
 		std::cout <<  "Looking for similar images of query #" << k+1 << std::endl;
