@@ -301,11 +301,11 @@ int main(int argc, char** argv){
 	vector<mypairf> postrank(top_feature);
 	string outname = argv[1];
 	outname.resize(outname.size()-4);
-	outname = outname+"-sim.txt";
+	string outname_sim = outname+"-sim.txt";
 	ofstream outputfile;
-	outputfile.open(outname,ios::out);
+	outputfile.open(outname_sim,ios::out);
 	if (DEMO==0) {
-		outname_hamming = outname+"-hamming.txt";
+		string outname_hamming = outname+"-hamming.txt";
 		ofstream outputfile_hamming;
 		outputfile_hamming.open(outname_hamming,ios::out);
 	}
@@ -347,7 +347,8 @@ int main(int argc, char** argv){
 			{
 				accum[i]=accum[i-1]+data_nums[i];
 			}
-			for (int i=0;i<top_feature;i++)
+			int i = 0;
+			for (;i<top_feature;i++)
 			{
 				int new_pos,file_id;
 				file_id= get_file_pos(accum,hamming[i].second,new_pos);
