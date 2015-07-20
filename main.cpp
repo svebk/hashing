@@ -11,6 +11,8 @@
 using namespace std;
 using namespace cv;
 
+#define DEMO 0
+
 template<class ty>
 void normalize(ty *X, size_t dim)
 {
@@ -301,7 +303,12 @@ int main(int argc, char** argv){
 	outname.resize(outname.size()-4);
 	outname = outname+"-sim.txt";
 	ofstream outputfile;
-	outputfile.open (outname,ios::out);
+	outputfile.open(outname,ios::out);
+	if (DEMO==0) {
+		outname_hamming = outname+"-hamming.txt";
+		ofstream outputfile_hamming;
+		outputfile_hamming.open(outname_hamming,ios::out);
+	}
 	unsigned int * query = query_all;
 	float * query_feature = (float*)query_mat.data;
 	runtimes[1]=(float)(get_wall_time() - t[1]);
@@ -349,6 +356,7 @@ int main(int argc, char** argv){
 				read_in_features[file_id]->read(feature_p, read_size);
 				feature_p +=read_size;
 			}
+			cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
 			delete[] accum;
 			runtimes[0]+=(float)(get_wall_time() - t[1]);
 		}
@@ -396,16 +404,30 @@ int main(int argc, char** argv){
 		//cout << postrank[0].second << std::endl;
 		//output
 		t[1]=get_wall_time();
-		for (int i=0;i<top_feature;i++)
+		for (int i=0;i<top_feature;i++) {
 			outputfile << postrank[i].second << ' ';
-		for (int i=0;i<top_feature;i++)
+			if (DEMO==0) {
+				outputfile_hamming << postrank[i].second << ' ';
+			}
+		}
+		for (int i=0;i<top_feature;i++) {
 			outputfile << postrank[i].first << ' ';
+			if (DEMO==0) {
+				outputfile_hamming << hamming[i].first << ' ';
+			}
+		}
 		outputfile << endl;
+		if (DEMO==0) {
+			outputfile_hamming << endl;
+		}
 		runtimes[4]+=(float)(get_wall_time() - t[1]);
 
 	}
 	delete[] query_all;
 	outputfile.close();
+	if (DEMO==0) {
+		outputfile_hamming.close();
+	}
 	read_in.close();
 	for (int i = 1; i<data_nums.size();i++)
 	{
