@@ -11,7 +11,7 @@
 using namespace std;
 using namespace cv;
 
-#define DEMO 0
+#define DEMO 1
 
 template<class ty>
 void normalize(ty *X, size_t dim)
