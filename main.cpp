@@ -304,9 +304,9 @@ int main(int argc, char** argv){
 	string outname_sim = outname+"-sim.txt";
 	ofstream outputfile;
 	outputfile.open(outname_sim,ios::out);
+	ofstream outputfile_hamming;
 	if (DEMO==0) {
 		string outname_hamming = outname+"-hamming.txt";
-		ofstream outputfile_hamming;
 		outputfile_hamming.open(outname_hamming,ios::out);
 	}
 	unsigned int * query = query_all;
