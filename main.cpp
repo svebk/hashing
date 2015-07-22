@@ -11,6 +11,8 @@
 using namespace std;
 using namespace cv;
 
+#define DEMO 1
+
 template<class ty>
 void normalize(ty *X, size_t dim)
 {
@@ -299,12 +301,18 @@ int main(int argc, char** argv){
 	vector<mypairf> postrank(top_feature);
 	string outname = argv[1];
 	outname.resize(outname.size()-4);
-	outname = outname+"-sim.txt";
+	string outname_sim = outname+"-sim.txt";
 	ofstream outputfile;
-	outputfile.open (outname,ios::out);
+	outputfile.open(outname_sim,ios::out);
+	ofstream outputfile_hamming;
+	if (DEMO==0) {
+		string outname_hamming = outname+"-hamming.txt";
+		outputfile_hamming.open(outname_hamming,ios::out);
+	}
 	unsigned int * query = query_all;
 	float * query_feature = (float*)query_mat.data;
 	runtimes[1]=(float)(get_wall_time() - t[1]);
+	// Parallelize this for batch processing.
 	for  (int k=0;k<query_num;k++)
 	{
 		std::cout <<  "Looking for similar images of query #" << k+1 << std::endl;
@@ -339,7 +347,8 @@ int main(int argc, char** argv){
 			{
 				accum[i]=accum[i-1]+data_nums[i];
 			}
-			for (int i=0;i<top_feature;i++)
+			int i = 0;
+			for (;i<top_feature;i++)
 			{
 				int new_pos,file_id;
 				file_id= get_file_pos(accum,hamming[i].second,new_pos);
@@ -348,6 +357,7 @@ int main(int argc, char** argv){
 				read_in_features[file_id]->read(feature_p, read_size);
 				feature_p +=read_size;
 			}
+			cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
 			delete[] accum;
 			runtimes[0]+=(float)(get_wall_time() - t[1]);
 		}
@@ -395,16 +405,30 @@ int main(int argc, char** argv){
 		//cout << postrank[0].second << std::endl;
 		//output
 		t[1]=get_wall_time();
-		for (int i=0;i<top_feature;i++)
+		for (int i=0;i<top_feature;i++) {
 			outputfile << postrank[i].second << ' ';
-		for (int i=0;i<top_feature;i++)
+			if (DEMO==0) {
+				outputfile_hamming << postrank[i].second << ' ';
+			}
+		}
+		for (int i=0;i<top_feature;i++) {
 			outputfile << postrank[i].first << ' ';
+			if (DEMO==0) {
+				outputfile_hamming << hamming[i].first << ' ';
+			}
+		}
 		outputfile << endl;
+		if (DEMO==0) {
+			outputfile_hamming << endl;
+		}
 		runtimes[4]+=(float)(get_wall_time() - t[1]);
 
 	}
 	delete[] query_all;
 	outputfile.close();
+	if (DEMO==0) {
+		outputfile_hamming.close();
+	}
 	read_in.close();
 	for (int i = 1; i<data_nums.size();i++)
 	{
