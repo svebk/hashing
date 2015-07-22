@@ -185,7 +185,7 @@ int main(int argc, char** argv){
 		read_in.open(update_hash_files[i],ios::in|ios::binary);
 		if (!read_in.is_open())
 		{
-			std::cout << "Cannot load the itq updates!" << std::endl;
+			std::cout << "Cannot load the itq updates! File "<< update_hash_files[i] << std::endl;
 			return -1;
 		}
 		read_size = sizeof(int)*data_nums[i+1]*int_num;
