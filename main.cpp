@@ -12,6 +12,7 @@ using namespace std;
 using namespace cv;
 
 #define DEMO 1
+#define INIT_FEAT 0
 
 template<class ty>
 void normalize(ty *X, size_t dim)
@@ -161,16 +162,25 @@ int main(int argc, char** argv){
 	vector<ifstream*> read_in_features;
 	// read in itq
 	vector<unsigned long long int> data_nums;
+	unsigned long long int data_num=0;
+
+	if (INIT_FEAT) {
 	data_nums.push_back((unsigned long long int)filesize(itq_name)*8/bit_num);
-	unsigned long long int data_num=data_nums[0];
+	data_num=data_nums[0];
+	}
 	for (int i=0;i<update_hash_files.size();i++)
 	{
 		data_nums.push_back((unsigned long long int)filesize(update_hash_files[i])*8/bit_num);
-		data_num +=data_nums[i+1];
+		if (INIT_FEAT) {
+			data_num +=data_nums[i+1];
+		} else {
+			data_num +=data_nums[i];
+		}
 	}
 
 	int top_feature=(int)ceil(data_num*ratio);
 
+	//std::cout << "Loading itq..." << std::endl;
 	read_in.open(itq_name,ios::in|ios::binary);
 	if (!read_in.is_open())
 	{
@@ -178,9 +188,12 @@ int main(int argc, char** argv){
 		return -1;
 	}
 	Mat itq(data_num,int_num,CV_32SC1);
+	read_size=0;
+	if (INIT_FEAT) {
 	read_size = sizeof(int)*data_nums[0]*int_num;
 	read_in.read((char*)itq.data, read_size);
 	read_in.close();
+	}
 	char * read_pos = (char*)itq.data+ read_size;
 	for (int i=0;i<update_hash_files.size();i++)
 	{
@@ -218,6 +231,8 @@ int main(int argc, char** argv){
 	read_in.read((char*)mvec.data, read_size);
 	read_in.close();
 
+	//std::cout << "Loading features..." << std::endl;
+	if (INIT_FEAT) {
 	//read in feature
 	if (norm)
 		read_in.open("feature_norm",ios::in|ios::binary);
@@ -228,13 +243,17 @@ int main(int argc, char** argv){
 		std::cout << "Cannot load the feature file!" << std::endl;
 		return -1;
 	}
+	}
 	Mat feature;
 	if (query_num>read_thres)
 	{
 		feature.create(data_num,feature_dim,CV_32F);
+		read_size=0;
+		if (INIT_FEAT) {
 		read_size = sizeof(float)*data_nums[0]*feature_dim;
 		read_in.read((char*)feature.data, read_size);
 		read_in.close();
+		}
 		read_pos = (char*)feature.data+ read_size;
 		for (int i=0;i<update_feature_files.size();i++)
 		{
@@ -244,7 +263,11 @@ int main(int argc, char** argv){
 				std::cout << "Cannot load the feature updates!" << std::endl;
 				return -1;
 			}
-			read_size = sizeof(float)*data_nums[i+1]*feature_dim;
+			if (INIT_FEAT) {
+				read_size = sizeof(float)*data_nums[i+1]*feature_dim;
+			} else {
+				read_size = sizeof(float)*data_nums[i]*feature_dim;
+			}
 			read_in.read(read_pos, read_size);
 			read_in.close();
 			read_pos +=read_size;
@@ -267,7 +290,7 @@ int main(int argc, char** argv){
 			}
 		} 
 	}
-
+	//std::cout << "Loaded all features!" << std::endl;
 	runtimes[0]=(float)(get_wall_time() - t[0]);
 
 	//demo
