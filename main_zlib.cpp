@@ -77,7 +77,7 @@ for (int i=0;i<data_num;i++)
     b_out+=defstream.total_out;
 }     
     // This is one way of getting the size of the output
-printf("Compressed size is: %lu\n", b_out);
+printf("Compressed size is: %d\n", b_out);
   //  printf("Compressed string is: %s\n", defstream.total_out, b);
 //    printf("Compressed size is: %lu\n", strlen(b));
   //  printf("Compressed string is: %s\n", b);
@@ -110,7 +110,7 @@ for (int i=0;i<data_num;i++)
 c_out+=infstream.total_out;
      }
 cout << "total time (seconds): " << (float)(get_wall_time() - t) << std::endl;
-printf("Uncompressed size is: %lu\n", c_out);
+printf("Uncompressed size is: %d\n", c_out);
 //printf("Uncompressed string is: %.*s\n", infstream.total_out, c);
 //    printf("Uncompressed size is: %lu\n", strlen(c));
  //   printf("Uncompressed string is: %s\n", c);
