@@ -6,11 +6,11 @@ CVLIBS=-lopencv_core  -lopencv_highgui -lz
 all: hashing 
 
 
-hashing: main.o header.o
-	$(CC)  main.o header.o -o hashing -fopenmp $(CVLIBS)
+hashing: main_zlib.o header.o
+	$(CC)  main_zlib.o header.o -o hashing -fopenmp $(CVLIBS)
 
-main.o: main.cpp header.h
-	$(CC) $(CFLAGS) main.cpp -o main.o -fopenmp
+main_zlib.o: main_zlib.cpp header.h
+	$(CC) $(CFLAGS) main_zlib.cpp -o main.o -fopenmp
 
 
 header.o: header.cpp header.h 
