@@ -93,19 +93,19 @@ int main(int argc, char** argv){
     	// File names vectors, prefix and suffix.
  	string line;
 	vector<string> update_feature_files;
-    	vector<string> update_comp_feature_files;
+    vector<string> update_comp_feature_files;
    	vector<string> update_compidx_files;
    	vector<int> need_comp;
-    	// mkdir? but no real cross platform of doing this...
+    // mkdir? but no real cross platform of doing this...
 	string update_feature_prefix = "update/features/";
    	string update_comp_feature_prefix = "update/comp_features/";
-    	string update_compidx_prefix = "update/comp_idx/";
+    string update_compidx_prefix = "update/comp_idx/";
    	int status; //Not working on MAC
-    	status = mkdir(update_comp_feature_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    	status = mkdir(update_compidx_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    status = mkdir(update_comp_feature_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    status = mkdir(update_compidx_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	string update_feature_suffix = "" + str_norm;
-    	string update_comp_feature_suffix = "_comp" + str_norm;
-    	string update_compidx_suffix = "_compidx" + str_norm;
+    string update_comp_feature_suffix = "_comp" + str_norm;
+    string update_compidx_suffix = "_compidx" + str_norm;
 
  	// This may be an argument or read from JSON conf
 	ifstream fu("update_list.txt",ios::in);
@@ -124,8 +124,8 @@ int main(int argc, char** argv){
 	}
 
     	// Check if we have as many comp files and comp idx as original feature files...
-    	unsigned long int data_num = 0;
-    	unsigned long int idx_num = 0;
+    	int data_num = 0;
+    	int idx_num = 0;
 	int filesizecomp = 0;
 	int filesizeidx = 0;
     	for (int i=0;i<update_comp_feature_files.size();i++)
@@ -137,8 +137,8 @@ int main(int argc, char** argv){
             		need_comp.push_back(i);
             		continue;
         	}
-        	data_num=(unsigned long int)(filesize(update_feature_files[i])/(sizeof(float)*feature_dim));
-        	idx_num=(unsigned long int)(filesize(update_compidx_files[i])/sizeof(unsigned long long int));
+        	data_num=filesize(update_feature_files[i])/(sizeof(float)*feature_dim));
+        	idx_num=filesize(update_compidx_files[i])/sizeof(unsigned long long int);
         	std::cout << "Curr feat size: " << data_num << " (feat file size: " << filesize(update_feature_files[i]) << "), curr idx size: " << idx_num  << " (compidx file size: " << filesize(update_compidx_files[i]) << ")" << endl;
         	if (idx_num!=data_num) // We have a mismatch indices vs features
     		        need_comp.push_back(i);
@@ -172,10 +172,8 @@ int main(int argc, char** argv){
         char* feature = new char[read_size];
         char* comp_feature = new char[read_size];
         unsigned long long int curr_pos = 0;
-	std::cout << "We need to compress " << data_num << " features for file " << update_feature_files[cfi] << std::endl;
+        std::cout << "We need to compress " << data_num << " features for file " << update_feature_files[cfi] << std::endl;
         // Compress each feature separately, write it out along its compressed size
-        comp_idx << curr_pos;
-
         for (int feat_num=0;feat_num<data_num;feat_num++) {
             read_in.read(feature, read_size);
             comp_size = compress_onefeat(feature,comp_feature,read_size);
