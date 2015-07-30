@@ -1,74 +1,14 @@
 #include "header.h"
 #include <opencv2/opencv.hpp>
 #include <fstream>
-#include <stdio.h>
-#include <string.h>  // for strlen if compressing strings.
 #include <assert.h>
-#include "zlib.h"
+#include "iotools.h"
 // For mkdir
 #include <sys/types.h>
 #include <sys/stat.h>
 
-
 using namespace std;
 using namespace cv;
-
-template<class ty>
-
-// L2 normalization of features
-void normalize(ty *X, size_t dim)
-{
-	ty sum = 0;
-	for (int i=0;i<dim;i++)
-	{
-		sum +=X[i]*X[i];
-	}
-	sum = sqrt(sum);
-	ty n = 1 / sum;
-	for (int i=0;i<dim;i++)
-	{
-		X[i] *= n;
-	}
-}
-
-int compress_onefeat(char * in, char * comp, int fsize) {
-    // Struct init
-    z_stream defstream;
-    defstream.zalloc = Z_NULL;
-    defstream.zfree = Z_NULL;
-    defstream.opaque = Z_NULL;
-    defstream.avail_in = (uInt)fsize; // size of input
-    defstream.next_in = (Bytef *)in; // input char array
-    defstream.avail_out = (uInt)fsize; // size of output
-    defstream.next_out = (Bytef *)comp; // output char array
-    
-    // the actual compression work.
-    deflateInit(&defstream, Z_BEST_COMPRESSION);
-    deflate(&defstream, Z_FINISH);
-    deflateEnd(&defstream);
-    return defstream.total_out;
-}
-
-ifstream::pos_type filesize(string filename)
-{
-	ifstream in(filename, ios::ate | ios::binary);
-	return in.tellg();
-}
-
-
-int get_file_pos(int * accum, int query, int & res)
-{
-	int file_id = 0;	
-	while (query >= accum[file_id])
-	{
-		file_id++;
-	}
-	if (!file_id)
-		res = query;
-	else
-		res = query-accum[file_id-1];
-	return file_id;
-}
 
 int main(int argc, char** argv){
 	double t[2]; // timing

@@ -1,91 +1,19 @@
 #include "header.h"
-#include "zlib.h"
-//#include <omp.h>
-//#include <vl/generic.h>
-
+#include "iotools.h"
 #include <opencv2/opencv.hpp>
-
-//#include <math.h>
 #include <fstream>
-
 
 using namespace std;
 using namespace cv;
 
 #define DEMO 1
 #define INIT_FEAT 0
-#define USE_COMP 0
-
-
-int decompress_onefeat(char * in, char * comp, int compsize, int fsize) {
-    // Struct init
-    z_stream infstream;
-    infstream.zalloc = Z_NULL;
-    infstream.zfree = Z_NULL;
-    infstream.opaque = Z_NULL;
-    infstream.avail_in = (uInt)compsize; // size of input
-    infstream.next_in = (Bytef *)in; // input char array
-    infstream.avail_out = (uInt)fsize; // size of output
-    infstream.next_out = (Bytef *)comp; // output char array
-    
-    // the actual de-compression work.
-    inflateInit(&infstream);
-    inflate(&infstream, Z_NO_FLUSH);
-    inflateEnd(&infstream);
-    return infstream.total_out;
-}
-
-template<class ty>
-
-// L2 normalization of features
-void normalize(ty *X, size_t dim)
-{
-	ty sum = 0;
-	for (int i=0;i<dim;i++)
-	{
-		sum +=X[i]*X[i];
-	}
-	sum = sqrt(sum);
-	ty n = 1 / sum;
-	for (int i=0;i<dim;i++)
-	{
-		X[i] *= n;
-	}
-}
 
 int NumberOfSetBits(unsigned int i)
 {
 	i = i - ((i >> 1) & 0x55555555);
 	i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
 	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
-}
-
-int count_bits(unsigned int n) {     
-	unsigned int c; // c accumulates the total bits set in v
-	for (c = 0; n; c++) 
-		n &= n - 1; // clear the least significant bit set
-	return c;
-}
-
-ifstream::pos_type filesize(string filename)
-{
-	ifstream in(filename, ios::ate | ios::binary);
-	return in.tellg(); 
-}
-
-int countHammDist(unsigned int n, unsigned int m)
-{
-	int i=0;
-	unsigned int count = 0 ;
-	for(i=0; i<8; i++){
-		if ((n&1) != (m&1)){
-			count++;
-		}
-		n >>= 1;
-		m >>= 1;
-
-	}
-	return count;
 }
 
 typedef std::pair<int,int> mypair;
@@ -97,19 +25,6 @@ bool comparator ( const mypair & l, const mypair & r)
 bool comparatorf ( const mypairf & l, const mypairf & r)
 { return l.first < r.first; }
 
-int get_file_pos(int * accum, int query, int & res)
-{
-	int file_id = 0;	
-	while (query >= accum[file_id])
-	{
-		file_id++;
-	}
-	if (!file_id)
-		res = query;
-	else
-		res = query-accum[file_id-1];
-	return file_id;
-}
 
 int main(int argc, char** argv){
 	double t[2]; // timing
