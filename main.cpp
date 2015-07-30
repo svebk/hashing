@@ -171,7 +171,6 @@ int main(int argc, char** argv){
         // TODO: We should clean here
         return -1;
     }
-	int status = 0;
     status = fill_vector_files(read_in_compfeatures,update_compfeature_files);
     if (status==-1) {
         std::cout << "Could not load compressed features properly. Exiting." << std::endl;
