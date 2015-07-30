@@ -6,14 +6,14 @@ CVLIBS=-lopencv_core -lopencv_highgui -lz
 
 all: hashing compress_feats
 
-hashing: main_zlib.o header.o
-	$(CC)  main_zlib.o header.o -o hashing -fopenmp $(CVLIBS)
+hashing: main.o header.o
+	$(CC)  main.o header.o -o hashing -fopenmp $(CVLIBS) -L$(LIB_DIRS)
 
 compress_feats: compress_feats.o header.o
 	$(CC)  compress_feats.o header.o -o compress_feats -I$(INCLUDE_DIRS) $(CVLIBS) -L$(LIB_DIRS)
 
-main_zlib.o: main_zlib.cpp header.h
-	$(CC) $(CFLAGS) main_zlib.cpp -o main_zlib.o -fopenmp
+main.o: main.cpp header.h
+	$(CC) $(CFLAGS) main.cpp -o main.o -fopenmp -I$(INCLUDE_DIRS)
 
 compress_feats.o: compress_feats.cpp header.h
 	$(CC) $(CFLAGS) compress_feats.cpp -o compress_feats.o -I$(INCLUDE_DIRS)

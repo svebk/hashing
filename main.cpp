@@ -1,5 +1,6 @@
 #include "header.h"
-#include <omp.h>
+#include "zlib.h"
+//#include <omp.h>
 //#include <vl/generic.h>
 
 #include <opencv2/opencv.hpp>
@@ -14,6 +15,25 @@ using namespace cv;
 #define DEMO 1
 #define INIT_FEAT 0
 #define USE_COMP 0
+
+
+int decompress_onefeat(char * in, char * comp, int compsize, int fsize) {
+    // Struct init
+    z_stream infstream;
+    infstream.zalloc = Z_NULL;
+    infstream.zfree = Z_NULL;
+    infstream.opaque = Z_NULL;
+    infstream.avail_in = (uInt)compsize; // size of input
+    infstream.next_in = (Bytef *)in; // input char array
+    infstream.avail_out = (uInt)fsize; // size of output
+    infstream.next_out = (Bytef *)comp; // output char array
+    
+    // the actual de-compression work.
+    inflateInit(&infstream);
+    inflate(&infstream, Z_NO_FLUSH);
+    inflateEnd(&infstream);
+    return infstream.total_out;
+}
 
 template<class ty>
 
@@ -100,8 +120,7 @@ int main(int argc, char** argv){
 
 		return -1;
 	}
-	omp_set_num_threads(omp_get_max_threads());
-
+	//omp_set_num_threads(omp_get_max_threads());
 
 	// hardcoded
 	int feature_dim = 4096;
@@ -146,14 +165,19 @@ int main(int argc, char** argv){
 	string line;
 	vector<string> update_hash_files;
 	vector<string> update_feature_files;
+	vector<string> update_comp_feature_files;
+   	vector<string> update_compidx_files;
 	string update_hash_prefix = "update/hash_bits/";
 	string update_feature_prefix = "update/features/";
+	string update_comp_feature_prefix = "update/comp_features/";
+	string update_compidx_prefix = "update/comp_idx/";
+	string update_feature_suffix = "" + str_norm;
+	string update_comp_feature_suffix = "_comp" + str_norm;
+	string update_compidx_suffix = "_compidx" + str_norm;
 	string update_hash_suffix = "";
-	string update_feature_suffix = "";
 	if (norm)
 	{
 		update_hash_suffix = "_" + itq_name;
-		update_feature_suffix = "_norm";
 	}
 	ifstream fu("update_list.txt",ios::in);
 	if (!fu.is_open())
@@ -165,10 +189,12 @@ int main(int argc, char** argv){
 		while (getline(fu, line)) {
 			update_hash_files.push_back(update_hash_prefix+line+update_hash_suffix);
 			update_feature_files.push_back(update_feature_prefix+line+update_feature_suffix);
-
+			update_comp_feature_files.push_back(update_comp_feature_prefix+line+update_comp_feature_suffix);
+			update_compidx_files.push_back(update_compidx_prefix+line+update_compidx_suffix);
 		}
 	}
-	vector<ifstream*> read_in_features;
+	vector<ifstream*> read_in_comp_features;
+	vector<ifstream*> read_in_compidx;
 	// read in itq
 	vector<unsigned long long int> data_nums;
 	unsigned long long int data_num=0;
@@ -253,59 +279,29 @@ int main(int argc, char** argv){
 		return -1;
 	}
 	}
-	Mat feature;
-	if (query_num>read_thres)
-	{
-		feature.create(data_num,feature_dim,CV_32F);
-		read_size=0;
-		if (INIT_FEAT) {
-		read_size = sizeof(float)*data_nums[0]*feature_dim;
-		read_in.read((char*)feature.data, read_size);
-		read_in.close();
-		}
-		read_pos = (char*)feature.data+ read_size;
-		for (int i=0;i<update_feature_files.size();i++)
-		{
-			read_in.open(update_feature_files[i],ios::in|ios::binary);
-			if (!read_in.is_open())
-			{
-				std::cout << "Cannot load the feature updates!" << std::endl;
-				return -1;
-			}
-			if (INIT_FEAT) {
-				read_size = sizeof(float)*data_nums[i+1]*feature_dim;
-			} else {
-				read_size = sizeof(float)*data_nums[i]*feature_dim;
-			}
-			read_in.read(read_pos, read_size);
-			read_in.close();
-			read_pos +=read_size;
-		} 
-	}
-	else
-	{
-		
-		feature.create(top_feature,feature_dim,CV_32F);
-		read_size = sizeof(float)*feature_dim;
-		read_in_features.push_back(&read_in);
-		for (int i=0;i<update_feature_files.size();i++)
-		{
-			read_in_features.push_back(new ifstream);
-			read_in_features[i+1]->open(update_feature_files[i],ios::in|ios::binary);
-			if (!read_in_features[i+1]->is_open())
-			{
-				std::cout << "Cannot load the feature updates!" << std::endl;
-				return -1;
-			}
-		} 
-	}
-	//std::cout << "Loaded all features!" << std::endl;
-	runtimes[0]=(float)(get_wall_time() - t[0]);
 
-	//demo
-	//int query_idx = 76;
-	//float * query_feature = (float*)feature.data+feature_dim*query_idx;
-	//unsigned int * query= (unsigned int*)itq.data+int_num*query_idx;
+
+	// Initializing features structures and files streams
+	Mat feature;
+	feature.create(top_feature,feature_dim,CV_32F);
+	for (int i=0;i<update_feature_files.size();i++)
+	{
+		read_in_comp_features.push_back(new ifstream);
+		read_in_comp_features[i]->open(update_comp_feature_files[i],ios::in|ios::binary);
+		read_in_compidx.push_back(new ifstream);
+		read_in_compidx[i]->open(update_compidx_files[i],ios::in|ios::binary);
+		if (!read_in_comp_features[i]->is_open())
+		{
+			std::cout << "Cannot load the comp feature updates!" << std::endl;
+			return -1;
+		}
+		if (!read_in_compidx[i]->is_open())
+		{
+			std::cout << "Cannot load the comp index updates!" << std::endl;
+			return -1;
+		}
+	} 
+	runtimes[0]=(float)(get_wall_time() - t[0]);
 
 	//hashing init
 	t[1]=get_wall_time();
@@ -344,7 +340,15 @@ int main(int argc, char** argv){
 	unsigned int * query = query_all;
 	float * query_feature = (float*)query_mat.data;
 	runtimes[1]=(float)(get_wall_time() - t[1]);
+
+	int * accum = new int[data_nums.size()];
+		accum[0]=data_nums[0];
+		for (int i=1;i<data_nums.size();i++)
+		{
+			accum[i]=accum[i-1]+data_nums[i];
+		}
 	// Parallelize this for batch processing.
+	// Beware of feature.data manipulation
 	for  (int k=0;k<query_num;k++)
 	{
 		std::cout <<  "Looking for similar images of query #" << k+1 << std::endl;
@@ -367,32 +371,32 @@ int main(int argc, char** argv){
 		runtimes[2]+=(float)(get_wall_time() - t[1]);
 
 		//read needed feature
-		if (query_num<=read_thres)
+		t[1]=get_wall_time();
+		char* feature_p = (char*)feature.data;
+		//cout << "what" <<hamming[1].first <<" "<<hamming[1].second << std::endl;
+		//cout << (unsigned int)(hamming[0].second)*4*feature_dim <<endl;
+		
+		int i = 0;
+		read_size = sizeof(float)*feature_dim;
+		char* comp_feature = new char[read_size];
+		for (;i<top_feature;i++)
 		{
-			t[1]=get_wall_time();
-			char* feature_p = (char*)feature.data;
-			//cout << "what" <<hamming[1].first <<" "<<hamming[1].second << std::endl;
-			//cout << (unsigned int)(hamming[0].second)*4*feature_dim <<endl;
-			int * accum = new int[data_nums.size()];
-			accum[0]=data_nums[0];
-			for (int i=1;i<data_nums.size();i++)
-			{
-				accum[i]=accum[i-1]+data_nums[i];
-			}
-			int i = 0;
-			for (;i<top_feature;i++)
-			{
-				int new_pos,file_id;
-				file_id= get_file_pos(accum,hamming[i].second,new_pos);
-				read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*4*feature_dim);
-				//cout<<read_in.tellg()<<endl;
-				read_in_features[file_id]->read(feature_p, read_size);
-				feature_p +=read_size;
-			}
-			cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
-			delete[] accum;
-			runtimes[0]+=(float)(get_wall_time() - t[1]);
+			int new_pos,file_id;
+			unsigned long long int start_feat,end_feat;
+			size_t idx_size = sizeof(unsigned long long int);
+			file_id=get_file_pos(accum,hamming[i].second,new_pos);
+			read_in_compidx[file_id]->seekg((unsigned long long int)(new_pos)*idx_size);
+			read_in_compidx[file_id]->read((char*)&start_feat, idx_size);
+			read_in_compidx[file_id]->read((char*)&end_feat, idx_size);
+			read_in_comp_features[file_id]->seekg(start_feat);
+			read_in_comp_features[file_id]->read(comp_feature, end_feat-start_feat);
+			decompress_onefeat(comp_feature, feature_p, (int)end_feat-start_feat, read_size);
+			feature_p +=read_size;
 		}
+		cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
+		delete[] accum;
+		runtimes[0]+=(float)(get_wall_time() - t[1]);
+
 
 
 		//post ranking
@@ -411,7 +415,8 @@ int main(int argc, char** argv){
 				for (int j=0;j<feature_dim;j++)
 				{
 					postrank[i].first-=query_feature[j]*data_feature[j];
-				}
+				}// Shouldn't we multiply by 2 to get the real euclidean distance value?...
+
 			}
 		}
 		else
@@ -464,8 +469,10 @@ int main(int argc, char** argv){
 	read_in.close();
 	for (int i = 1; i<data_nums.size();i++)
 	{
-		read_in_features[i]->close();
-		delete read_in_features[i];
+		read_in_comp_features[i]->close();
+		read_in_compidx[i]->close();
+		delete read_in_comp_features[i];
+		delete read_in_compidx[i];
 	}
 
 	cout << "loading (seconds): " << runtimes[0] << std::endl;
