@@ -54,7 +54,11 @@ int main(int argc, char** argv){
 	string udpate_fn = "update_list.txt";
 
 	int status = get_n_features(udpate_fn,query_ids,query_num,norm,bit_num,read_size,feature_cp);
-
+	if (status==-1) {
+		std::cout << "Could not get features. Exiting." << std::endl;
+        // TODO: We should clean here
+        return -1;
+    }
 	// write out features to out_file
 	cout << "Will write feature to " << out_file << endl;
 	ofstream output(out_file,ofstream::binary);

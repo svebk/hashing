@@ -17,11 +17,11 @@ int decompress_onefeat(char * in, char * comp, int compsize, int fsize);
 
 // File reading functions
 std::ifstream::pos_type filesize(std::string filename);
-int get_file_pos(int * accum, int query, int & res);
+int get_file_pos(int * accum, int nb_files, int query, int & res);
 
 // Getting one features from the binary files
-void get_onefeatcomp(int query_ids, size_t read_size, int* accum, vector<ifstream*>& read_in_compfeatures, vector<ifstream*>& read_in_compidx, char* feature_cp);
-void get_onefeat(int query_ids, size_t read_size, int* accum, vector<ifstream*>& read_in_features, char* feature_cp);
+int get_onefeatcomp(int query_ids, size_t read_size, int* accum, vector<ifstream*>& read_in_compfeatures, vector<ifstream*>& read_in_compidx, char* feature_cp);
+int get_onefeat(int query_ids, size_t read_size, int* accum, vector<ifstream*>& read_in_features, char* feature_cp);
 
 void fill_accum(vector<unsigned long long int>& data_nums,int * accum);
 unsigned long long int fill_data_nums(vector<string>& update_hash_files, vector<unsigned long long int>& data_nums, int bit_num);
