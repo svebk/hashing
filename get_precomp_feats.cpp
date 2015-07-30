@@ -63,6 +63,7 @@ int main(int argc, char** argv){
 		feature_cp +=  read_size;
 	}
 	output.close();
+	cout << "Feature saved to " << out_file << endl;
 
 	// Cleaning
 	delete[] query_ids;
