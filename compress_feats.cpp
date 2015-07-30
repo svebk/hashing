@@ -80,7 +80,7 @@ int main(int argc, char** argv){
         	}
         	data_num=filesize(update_feature_files[i])/(sizeof(float)*feature_dim);
         	idx_num=filesize(update_compidx_files[i])/sizeof(unsigned long long int);
-        	if (idx_num-2!=data_num) {
+        	if (idx_num-1!=data_num) {
 			// We have a mismatch indices vs features 
 	        	std::cout << "Curr feat size: " << data_num << " (feat file size: " << filesize(update_feature_files[i]) << "), curr idx size: " << idx_num  << " (compidx file size: " << filesize(update_compidx_files[i]) << ")" << endl;
     		        need_comp.push_back(i);
@@ -126,11 +126,9 @@ int main(int argc, char** argv){
             // }
             comp_size = compress_onefeat(feature,comp_feature,read_size);
             comp_out.write(comp_feature,comp_size);
-            comp_idx.write((char *)&curr_pos,sizeof(unsigned long long int));
             curr_pos+=comp_size;
+            comp_idx.write((char *)&curr_pos,sizeof(unsigned long long int));
         }
-        // Writing last index to be able to read last feature
-        comp_idx.write((char *)&curr_pos,sizeof(unsigned long long int));
         delete feature;
         delete comp_feature;
         read_in.close();  
