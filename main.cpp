@@ -119,7 +119,7 @@ int main(int argc, char** argv){
 	}
 	Mat itq(data_num,int_num,CV_32SC1);
 	read_size=0;
-	char * read_pos = (char*)itq.data+ read_size;
+	char * read_pos = (char*)itq.data+read_size;
 	for (int i=0;i<update_hash_files.size();i++)
 	{
 		read_in.open(update_hash_files[i],ios::in|ios::binary);

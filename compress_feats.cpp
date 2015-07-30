@@ -116,6 +116,7 @@ int main(int argc, char** argv){
         char* feature = new char[read_size];
         char* comp_feature = new char[read_size];
         unsigned long long int curr_pos = 0;
+        comp_idx.write((char *)&curr_pos,sizeof(unsigned long long int));
         std::cout << "We need to compress " << data_num << " features for file " << update_feature_files[fi] << std::endl;
         // Compress each feature separately, write it out along its compressed size
         for (int feat_num=0;feat_num<data_num;feat_num++) {
