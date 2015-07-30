@@ -15,7 +15,7 @@ compress_feats: compress_feats.o header.o iotools.o
 get_precomp_feats: get_precomp_feats.o iotools.o header.o
 	$(CC) get_precomp_feats.o header.o iotools.o -o get_precomp_feats -I$(INCLUDE_DIRS) $(CVLIBS) -L$(LIB_DIRS)
 
-iotools.o: iotools.cpp iotools.h
+iotools.o: iotools.cpp iotools.h header.h
 	$(CC) $(CFLAGS) iotools.cpp -o iotools.o
 
 main.o: main.cpp header.h iotools.h

@@ -5,6 +5,12 @@
 
 using namespace std;
 
+// This is in header
+extern string update_hash_prefix;
+extern string update_feature_prefix;
+extern string update_compfeature_prefix;
+extern string update_compidx_prefix;
+
 // Compression functions
 int compress_onefeat(char * in, char * comp, int fsize);
 int decompress_onefeat(char * in, char * comp, int compsize, int fsize);
@@ -16,6 +22,12 @@ int get_file_pos(int * accum, int query, int & res);
 // Getting one features from the binary files
 void get_onefeatcomp(int query_ids, size_t read_size, int* accum, vector<ifstream*>& read_in_compfeatures, vector<ifstream*>& read_in_compidx, char* feature_cp);
 void get_onefeat(int query_ids, size_t read_size, int* accum, vector<ifstream*>& read_in_features, char* feature_cp);
+
+void fill_accum(vector<unsigned long long int>& data_nums,int * accum);
+unsigned long long int fill_data_nums(vector<string>& update_hash_files, vector<unsigned long long int>& data_nums, int bit_num);
+int fill_vector_files(vector<ifstream*>& read_in, vector<string>& update_files);
+
+int get_n_features(string udpate_fn, int* query_ids, int query_num, int norm, int bit_num, size_t read_size, char* feature_cp);
 
 // Template functions have to be declared in header
 template<class ty>

@@ -19,7 +19,8 @@ int main(int argc, char** argv){
 	}
 	//omp_set_num_threads(omp_get_max_threads());
 
-	// hardcoded
+	// hardcoded default value. 
+	// TODO put this in header, at least we have a single file to modify
 	int feature_dim = 4096;
 	int norm = true;
 	// we just use hashing files to know number of features per update here.
@@ -31,15 +32,6 @@ int main(int argc, char** argv){
 		bit_num = atoi(argv[3]);
 	if (argc>4)
 		norm = atoi(argv[4]);
-
-	int int_num = bit_num/32;
-	string bit_string = to_string((long long)bit_num);
-	string str_norm = "";
-	if (norm)
-		str_norm = "norm_";
-	string itq_name = "itq_" + str_norm + bit_string;
-	string W_name = "W_" + str_norm + bit_string;
-	string mvec_name = "mvec_" + str_norm + bit_string;
 
 	//read in query
 	int	query_num = (int)filesize(argv[1])/sizeof(int);
@@ -55,95 +47,13 @@ int main(int argc, char** argv){
 	read_in.read((char*)query_ids, read_size);
 	read_in.close();
 
-	//config update
-	string line;
-	vector<string> update_hash_files;
-	vector<string> update_feature_files;
-	string update_hash_suffix = "";
-	string update_feature_suffix = "";
-
-	if (norm)
-	{
-		update_hash_suffix = "_" + itq_name;
-		update_feature_suffix = "_norm";
-	}
-	ifstream fu("update_list.txt",ios::in);
-	if (!fu.is_open())
-	{
-		std::cout << "no update" << std::endl;
-	}
-	else
-	{
-		while (getline(fu, line)) {
-			update_hash_files.push_back(update_hash_prefix+line+update_hash_suffix);
-			update_feature_files.push_back(update_feature_prefix+line+update_feature_suffix);
-
-		}
-	}
-	vector<ifstream*> read_in_features;
-	
-	// read in itq
-	vector<unsigned long long int> data_nums;
-	data_nums.push_back((unsigned long long int)filesize(itq_name)*8/bit_num);
-	unsigned long long int data_num=data_nums[0];
-	for (int i=0;i<update_hash_files.size();i++)
-	{
-		data_nums.push_back((unsigned long long int)filesize(update_hash_files[i])*8/bit_num);
-		data_num +=data_nums[i+1];
-	}
-
-	int * accum = new int[data_nums.size()];
-	accum[0]=data_nums[0];
-	for (int i=1;i<data_nums.size();i++)
-	{
-		accum[i]=accum[i-1]+data_nums[i];
-	}
-
-	//read in feature
-	if (norm)
-		read_in.open("feature_norm",ios::in|ios::binary);
-	else
-		read_in.open("feature",ios::in|ios::binary);
-	if (!read_in.is_open())
-	{
-		std::cout << "Cannot load the feature file!" << std::endl;
-		return -1;
-	}
-		
 	float* feature = new float[query_num*feature_dim*sizeof(float)];
 	read_size = sizeof(float)*feature_dim;
-	read_in_features.push_back(&read_in);
-	for (int i=0;i<update_feature_files.size();i++)
-	{
-		read_in_features.push_back(new ifstream);
-		read_in_features[i+1]->open(update_feature_files[i],ios::in|ios::binary);
-		if (!read_in_features[i+1]->is_open())
-			{
-				std::cout << "Cannot load the feature updates!" << std::endl;
-				return -1;
-			} 
-	}
-
 	char* feature_cp = (char*)feature;
-		
-	for (int i=0;i<query_num;i++)
-	{
-		int new_pos,file_id;
-		std::cout << "Looking for feature #" << query_ids[i] << std::endl;
-		get_onefeat(query_ids[i]-1,read_size,accum,read_in_features,feature_cp);
-		feature_cp +=read_size;
-	}
-	
-	delete[] accum;
-	delete[] query_ids;
-	
-	// properly close
-	read_in.close();
-	for (int i = 1; i<data_nums.size();i++)
-	{
-		read_in_features[i]->close();
-		delete read_in_features[i];
-	}
+
+	string udpate_fn = "update_list.txt";
+
+	int status = get_n_features(udpate_fn,query_ids,query_num,norm,bit_num,read_size,feature_cp);
 
 	// write out features to out_file
 	ofstream output(out_file,ofstream::binary);
@@ -153,6 +63,10 @@ int main(int argc, char** argv){
 		feature_cp +=  read_size;
 	}
 	output.close();
+
+	// Cleaning
+	delete[] query_ids;
+	delete[] feature;
 
 	cout << "total time (seconds): " << (float)(get_wall_time() - t[0]) << std::endl;
 	return 0;

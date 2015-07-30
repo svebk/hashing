@@ -2,7 +2,6 @@
 #include "zlib.h"
 #include <stdio.h>
 
-
 // Compression functions
 int compress_onefeat(char * in, char * comp, int fsize) {
     // Struct init
@@ -85,4 +84,113 @@ void get_onefeat(int query_id, size_t read_size, int* accum, vector<ifstream*>& 
     std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
     read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*read_size);
     read_in_features[file_id]->read(feature_cp, read_size);    
+}
+
+unsigned long long int fill_data_nums(vector<string>& update_hash_files, vector<unsigned long long int>& data_nums, int bit_num) {
+    unsigned long long int data_num = 0;
+    for (int i=0;i<update_hash_files.size();i++)
+    {
+        data_nums.push_back((unsigned long long int)filesize(update_hash_files[i])*8/bit_num);
+        data_num += data_nums[i];
+    }
+    return data_num;
+}
+
+int fill_vector_files(vector<ifstream*>& read_in, vector<string>& update_files){
+    for (int i=0;i<update_files.size();i++)
+    {
+        read_in.push_back(new ifstream);
+        read_in[i]->open(update_files[i],ios::in|ios::binary);
+        if (!read_in[i]->is_open())
+            {
+                std::cout << "Cannot load the file " << update_files[i] << std::endl;
+                return -1;
+            } 
+    }
+    return 0;
+}
+
+void fill_accum(vector<unsigned long long int>& data_nums, int * accum) {
+    accum[0]=data_nums[0];
+    for (int i=1;i<data_nums.size();i++)
+    {
+        accum[i]=accum[i-1]+data_nums[i];
+    }
+}
+
+int get_n_features(string udpate_fn, int* query_ids, int query_num, int norm, int bit_num, size_t read_size, char* feature_cp) {
+    // Some ugly hard coded string initialization...
+    string bit_string = to_string((long long)bit_num);
+    string str_norm = "";
+    if (norm)
+        str_norm = "_norm";
+    string itq_name = "itq" + str_norm + "_" + bit_string;
+    string update_compfeature_suffix = "_comp" + str_norm;
+    string update_compidx_suffix = "_compidx" + str_norm;
+    string update_hash_suffix = "";
+    if (norm)
+    {
+        update_hash_suffix = "_" + itq_name;
+    }
+
+    // Config update
+    string line;
+    vector<string> update_hash_files;
+    vector<string> update_compfeature_files;
+    vector<string> update_compidx_files;
+    ifstream fu(udpate_fn,ios::in);
+    if (!fu.is_open())
+    {
+        std::cout << "no update" << std::endl;
+    }
+    else
+    {
+        while (getline(fu, line)) {
+            update_hash_files.push_back(update_hash_prefix+line+update_hash_suffix);
+            update_compfeature_files.push_back(update_compfeature_prefix+line+update_compfeature_suffix);
+            update_compidx_files.push_back(update_compidx_prefix+line+update_compidx_suffix);
+        }
+    }
+    
+    // get compressed features files pointers and their corresponding indices
+    vector<ifstream*> read_in_compfeatures;
+    vector<ifstream*> read_in_compidx;
+    int status = 0;
+    status = fill_vector_files(read_in_compfeatures,update_compfeature_files);
+    if (status==-1) {
+        std::cout << "Could not load compressed features properly. Exiting." << std::endl;
+        // TODO: We should clean here
+        return -1;
+    }
+    status = fill_vector_files(read_in_compidx,update_compidx_files);
+    if (status==-1) {
+        std::cout << "Could not load compressed indices properly. Exiting." << std::endl;
+        // TODO: We should clean here
+        return -1;
+    }
+
+    // read in all files size to know where to look for features...
+    vector<unsigned long long int> data_nums;
+    unsigned long long int data_num = fill_data_nums(update_hash_files,data_nums,bit_num);
+    int * accum = new int[data_nums.size()];
+    fill_accum(data_nums,accum);
+
+    // Get query feature(s)
+    for (int i=0;i<query_num;i++)
+    {
+        std::cout << "Looking for feature #" << query_ids[i] << std::endl;
+        get_onefeatcomp(query_ids[i]-1,read_size,accum,read_in_compfeatures,read_in_compidx,feature_cp);
+        feature_cp +=read_size;
+    }
+    
+    // clean exit
+    delete[] accum;
+    for (int i = 1; i<data_nums.size();i++)
+    {
+        read_in_compfeatures[i]->close();
+        read_in_compidx[i]->close();
+        delete read_in_compfeatures[i];
+        delete read_in_compidx[i];
+    }
+    return 0;
 }
