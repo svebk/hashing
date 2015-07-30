@@ -56,6 +56,7 @@ int main(int argc, char** argv){
 	int status = get_n_features(udpate_fn,query_ids,query_num,norm,bit_num,read_size,feature_cp);
 
 	// write out features to out_file
+	cout << "Will write feature to " << out_file << endl;
 	ofstream output(out_file,ofstream::binary);
 	feature_cp = (char*)feature;
 	for (int i = 0; i<query_num; i++) {
