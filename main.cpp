@@ -7,7 +7,6 @@ using namespace std;
 using namespace cv;
 
 #define DEMO 1
-#define INIT_FEAT 0
 
 int NumberOfSetBits(unsigned int i)
 {
@@ -120,11 +119,6 @@ int main(int argc, char** argv){
 	}
 	Mat itq(data_num,int_num,CV_32SC1);
 	read_size=0;
-	if (INIT_FEAT) {
-	read_size = sizeof(int)*data_nums[0]*int_num;
-	read_in.read((char*)itq.data, read_size);
-	read_in.close();
-	}
 	char * read_pos = (char*)itq.data+ read_size;
 	for (int i=0;i<update_hash_files.size();i++)
 	{
@@ -134,7 +128,7 @@ int main(int argc, char** argv){
 			std::cout << "Cannot load the itq updates! File "<< update_hash_files[i] << std::endl;
 			return -1;
 		}
-		read_size = sizeof(int)*data_nums[i+1]*int_num;
+		read_size = sizeof(int)*data_nums[i]*int_num;
 		read_in.read(read_pos, read_size);
 		read_in.close();
 		read_pos +=read_size;
