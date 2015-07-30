@@ -46,13 +46,19 @@ std::ifstream::pos_type filesize(std::string filename)
 	return in.tellg(); 
 }
 
-int get_file_pos(int * accum, int query, int & res)
+int get_file_pos(int * accum, int nb_files, int query, int & res)
 {
     int file_id = 0;    
-    while (query >= accum[file_id])
+    while (query >= accum[file_id] && file_id<nb_files)
     {
         file_id++;
     }
+    if (file_id==nb_files) {
+        res=-1;
+        std::cout << "Could not find feature "  << query << ", maximum id is " << accum[file_id-1] << std::endl;
+        return -1;
+    }
+
     if (!file_id)
         res = query;
     else
@@ -60,13 +66,15 @@ int get_file_pos(int * accum, int query, int & res)
     return file_id;
 }
 
-void get_onefeatcomp(int query_id, size_t read_size, int* accum, vector<ifstream*>& read_in_compfeatures, vector<ifstream*>& read_in_compidx, char* feature_cp) {
+int get_onefeatcomp(int query_id, size_t read_size, int* accum, vector<ifstream*>& read_in_compfeatures, vector<ifstream*>& read_in_compidx, char* feature_cp) {
     int new_pos = 0;
     int file_id = 0;
     size_t idx_size = sizeof(unsigned long long int);
     unsigned long long int start_feat,end_feat;
     char* comp_feature = new char[read_size];
-    file_id = get_file_pos(accum, query_id, new_pos);
+    file_id = get_file_pos(accum, (int)read_in_compidx.size(), query_id, new_pos);
+    if (file_id==-1)
+        return -1;
     std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
     read_in_compidx[file_id]->seekg((unsigned long long int)(new_pos)*idx_size);
     read_in_compidx[file_id]->read((char*)&start_feat, idx_size);
@@ -75,15 +83,19 @@ void get_onefeatcomp(int query_id, size_t read_size, int* accum, vector<ifstream
     read_in_compfeatures[file_id]->read(comp_feature, end_feat-start_feat);
     decompress_onefeat(comp_feature, feature_cp, (int)end_feat-start_feat, read_size);
     delete[] comp_feature;
+    return 0;
 }
 
-void get_onefeat(int query_id, size_t read_size, int* accum, vector<ifstream*>& read_in_features, char* feature_cp) {
+int get_onefeat(int query_id, size_t read_size, int* accum, vector<ifstream*>& read_in_features, char* feature_cp) {
     int new_pos = 0;
     int file_id = 0;
-    file_id = get_file_pos(accum, query_id, new_pos);
+    file_id = get_file_pos(accum, (int)read_in_features.size(), query_id, new_pos);
+    if (file_id==-1)
+        return -1;
     std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
     read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*read_size);
     read_in_features[file_id]->read(feature_cp, read_size);    
+    return 0;
 }
 
 unsigned long long int fill_data_nums(vector<string>& update_hash_files, vector<unsigned long long int>& data_nums, int bit_num) {

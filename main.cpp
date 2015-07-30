@@ -249,10 +249,16 @@ int main(int argc, char** argv){
 		t[1]=get_wall_time();
 		char* feature_p = (char*)feature.data;
 		int i = 0;
+		int status = 0;
 		read_size = sizeof(float)*feature_dim;
 		for (;i<top_feature;i++)
 		{
-			get_onefeatcomp(hamming[i].second,read_size,accum,read_in_compfeatures,read_in_compidx,feature_p);
+			status = get_onefeatcomp(hamming[i].second,read_size,accum,read_in_compfeatures,read_in_compidx,feature_p);
+			if (status==-1) {
+        		std::cout << "Could not get feature " << hamming[i].second << ". Exiting." << std::endl;
+        		// TODO: We should clean here
+        		return -1;
+    		}
 			feature_p +=read_size;
 		}
 		cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
