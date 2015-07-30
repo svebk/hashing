@@ -121,9 +121,9 @@ int main(int argc, char** argv){
         // Compress each feature separately, write it out along its compressed size
         for (int feat_num=0;feat_num<data_num;feat_num++) {
             read_in.read(feature, read_size);
-            if (norm) {
-                normalize((float*)feature,feature_dim);
-            }
+            // if (norm) {
+            //     normalize((float*)feature,feature_dim);
+            // }
             comp_size = compress_onefeat(feature,comp_feature,read_size);
             comp_out.write(comp_feature,comp_size);
             comp_idx.write((char *)&curr_pos,sizeof(unsigned long long int));
