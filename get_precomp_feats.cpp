@@ -12,7 +12,7 @@ using namespace cv;
 int main(int argc, char** argv){
 	double t[2]; // timing
 	t[0] = get_wall_time(); // Start Time
-	if (argc < 2){
+	if (argc < 3){
 		cout << "Usage: get_precomp_feats feature_ids_file_name feature_file_name [num_bits normalize_features]" << std::endl;
 
 		return -1;

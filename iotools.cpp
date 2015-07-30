@@ -179,6 +179,8 @@ int get_n_features(string udpate_fn, int* query_ids, int query_num, int norm, in
     for (int i=0;i<query_num;i++)
     {
         std::cout << "Looking for feature #" << query_ids[i] << std::endl;
+        // BEWARE: we consider here ids are python/db, so in C they are ids+1...
+        // TODO: maybe define a flag python id or not
         get_onefeatcomp(query_ids[i]-1,read_size,accum,read_in_compfeatures,read_in_compidx,feature_cp);
         feature_cp +=read_size;
     }
