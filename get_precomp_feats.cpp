@@ -59,10 +59,9 @@ int main(int argc, char** argv){
 	string line;
 	vector<string> update_hash_files;
 	vector<string> update_feature_files;
-	string update_hash_prefix = "update/hash_bits/";
-	string update_feature_prefix = "update/features/";
 	string update_hash_suffix = "";
 	string update_feature_suffix = "";
+
 	if (norm)
 	{
 		update_hash_suffix = "_" + itq_name;
@@ -82,6 +81,7 @@ int main(int argc, char** argv){
 		}
 	}
 	vector<ifstream*> read_in_features;
+	
 	// read in itq
 	vector<unsigned long long int> data_nums;
 	data_nums.push_back((unsigned long long int)filesize(itq_name)*8/bit_num);
@@ -90,6 +90,13 @@ int main(int argc, char** argv){
 	{
 		data_nums.push_back((unsigned long long int)filesize(update_hash_files[i])*8/bit_num);
 		data_num +=data_nums[i+1];
+	}
+
+	int * accum = new int[data_nums.size()];
+	accum[0]=data_nums[0];
+	for (int i=1;i<data_nums.size();i++)
+	{
+		accum[i]=accum[i-1]+data_nums[i];
 	}
 
 	//read in feature
@@ -118,24 +125,12 @@ int main(int argc, char** argv){
 	}
 
 	char* feature_cp = (char*)feature;
-	int * accum = new int[data_nums.size()];
-	accum[0]=data_nums[0];
-	for (int i=1;i<data_nums.size();i++)
-	{
-		accum[i]=accum[i-1]+data_nums[i];
-	}
-	
 		
 	for (int i=0;i<query_num;i++)
 	{
 		int new_pos,file_id;
 		std::cout << "Looking for feature #" << query_ids[i] << std::endl;
-		file_id= get_file_pos(accum,query_ids[i]-1,new_pos);
-		std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
-		read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*sizeof(float)*feature_dim);
-		//read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*4*feature_dim);
-		//cout<<read_in.tellg()<<endl;
-		read_in_features[file_id]->read(feature_cp, read_size);
+		get_onefeat(query_ids[i]-1,read_size,accum,read_in_features,feature_cp);
 		feature_cp +=read_size;
 	}
 	

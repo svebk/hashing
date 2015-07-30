@@ -1,7 +1,7 @@
 #include "iotools.h"
 #include "zlib.h"
 #include <stdio.h>
-#include <string.h>  // for strlen if compressing strings.
+
 
 // Compression functions
 int compress_onefeat(char * in, char * comp, int fsize) {
@@ -59,4 +59,30 @@ int get_file_pos(int * accum, int query, int & res)
     else
         res = query-accum[file_id-1];
     return file_id;
+}
+
+void get_onefeatcomp(int query_id, size_t read_size, int* accum, vector<ifstream*>& read_in_compfeatures, vector<ifstream*>& read_in_compidx, char* feature_cp) {
+    int new_pos = 0;
+    int file_id = 0;
+    size_t idx_size = sizeof(unsigned long long int);
+    unsigned long long int start_feat,end_feat;
+    char* comp_feature = new char[read_size];
+    file_id = get_file_pos(accum, query_id, new_pos);
+    std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
+    read_in_compidx[file_id]->seekg((unsigned long long int)(new_pos)*idx_size);
+    read_in_compidx[file_id]->read((char*)&start_feat, idx_size);
+    read_in_compidx[file_id]->read((char*)&end_feat, idx_size);
+    read_in_compfeatures[file_id]->seekg(start_feat);
+    read_in_compfeatures[file_id]->read(comp_feature, end_feat-start_feat);
+    decompress_onefeat(comp_feature, feature_cp, (int)end_feat-start_feat, read_size);
+    delete[] comp_feature;
+}
+
+void get_onefeat(int query_id, size_t read_size, int* accum, vector<ifstream*>& read_in_features, char* feature_cp) {
+    int new_pos = 0;
+    int file_id = 0;
+    file_id = get_file_pos(accum, query_id, new_pos);
+    std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
+    read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*read_size);
+    read_in_features[file_id]->read(feature_cp, read_size);    
 }

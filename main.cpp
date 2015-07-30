@@ -82,10 +82,6 @@ int main(int argc, char** argv){
 	vector<string> update_feature_files;
 	vector<string> update_comp_feature_files;
    	vector<string> update_compidx_files;
-	string update_hash_prefix = "update/hash_bits/";
-	string update_feature_prefix = "update/features/";
-	string update_comp_feature_prefix = "update/comp_features/";
-	string update_compidx_prefix = "update/comp_idx/";
 	string update_feature_suffix = "" + str_norm;
 	string update_comp_feature_suffix = "_comp" + str_norm;
 	string update_compidx_suffix = "_compidx" + str_norm;
@@ -291,21 +287,26 @@ int main(int argc, char** argv){
 		//cout << "what" <<hamming[1].first <<" "<<hamming[1].second << std::endl;
 		//cout << (unsigned int)(hamming[0].second)*4*feature_dim <<endl;
 		
+
+
 		int i = 0;
 		read_size = sizeof(float)*feature_dim;
-		char* comp_feature = new char[read_size];
+		//char* comp_feature = new char[read_size];
 		for (;i<top_feature;i++)
 		{
-			int new_pos,file_id;
-			unsigned long long int start_feat,end_feat;
-			size_t idx_size = sizeof(unsigned long long int);
-			file_id=get_file_pos(accum,hamming[i].second,new_pos);
-			read_in_compidx[file_id]->seekg((unsigned long long int)(new_pos)*idx_size);
-			read_in_compidx[file_id]->read((char*)&start_feat, idx_size);
-			read_in_compidx[file_id]->read((char*)&end_feat, idx_size);
-			read_in_comp_features[file_id]->seekg(start_feat);
-			read_in_comp_features[file_id]->read(comp_feature, end_feat-start_feat);
-			decompress_onefeat(comp_feature, feature_p, (int)end_feat-start_feat, read_size);
+			// Use get_onefeatcomp here.
+			get_onefeatcomp(hamming[i].second,read_size,accum,read_in_comp_features,read_in_compidx,feature_p);
+
+			// int new_pos,file_id;
+			// unsigned long long int start_feat,end_feat;
+			// size_t idx_size = sizeof(unsigned long long int);
+			// file_id=get_file_pos(accum,hamming[i].second,new_pos);
+			// read_in_compidx[file_id]->seekg((unsigned long long int)(new_pos)*idx_size);
+			// read_in_compidx[file_id]->read((char*)&start_feat, idx_size);
+			// read_in_compidx[file_id]->read((char*)&end_feat, idx_size);
+			// read_in_comp_features[file_id]->seekg(start_feat);
+			// read_in_comp_features[file_id]->read(comp_feature, end_feat-start_feat);
+			// decompress_onefeat(comp_feature, feature_p, (int)end_feat-start_feat, read_size);
 			feature_p +=read_size;
 		}
 		cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
