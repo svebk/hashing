@@ -247,7 +247,8 @@ int main(int argc, char** argv){
 		read_size = sizeof(float)*feature_dim;
 		for (;i<top_feature;i++)
 		{
-			status = get_onefeatcomp(hamming[i].second,read_size,accum,read_in_compfeatures,read_in_compidx,feature_p);
+			//status = get_onefeatcomp(hamming[i].second,read_size,accum,read_in_compfeatures,read_in_compidx,feature_p);
+			status = get_onefeat(hamming[i].second,read_size,accum,read_in_features,feature_p);
 			if (status==-1) {
         		std::cout << "Could not get feature " << hamming[i].second << ". Exiting." << std::endl;
         		// TODO: We should clean here
