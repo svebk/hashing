@@ -141,10 +141,10 @@ int main(int argc, char** argv){
 	string bit_string = to_string((long long)bit_num);
 	string str_norm = "";
 	if (norm)
-		str_norm = "norm_";
-	string itq_name = "itq_" + str_norm + bit_string;
-	string W_name = "W_" + str_norm + bit_string;
-	string mvec_name = "mvec_" + str_norm + bit_string;
+		str_norm = "_norm";
+	string itq_name = "itq" + str_norm + "_" + bit_string;
+	string W_name = "W" + str_norm + "_" + bit_string;
+	string mvec_name = "mvec" + str_norm + "_" + bit_string;
 
 	//read in query
 	int	query_num = (int)filesize(argv[1])/4/feature_dim;
@@ -292,7 +292,7 @@ int main(int argc, char** argv){
 		read_in_compidx[i]->open(update_compidx_files[i],ios::in|ios::binary);
 		if (!read_in_comp_features[i]->is_open())
 		{
-			std::cout << "Cannot load the comp feature updates!" << std::endl;
+			std::cout << "Cannot load the comp feature update: " << update_comp_feature_files[i] << std::endl;
 			return -1;
 		}
 		if (!read_in_compidx[i]->is_open())
@@ -394,7 +394,6 @@ int main(int argc, char** argv){
 			feature_p +=read_size;
 		}
 		cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
-		delete[] accum;
 		runtimes[0]+=(float)(get_wall_time() - t[1]);
 
 
@@ -461,6 +460,7 @@ int main(int argc, char** argv){
 		runtimes[4]+=(float)(get_wall_time() - t[1]);
 
 	}
+	delete[] accum;
 	delete[] query_all;
 	outputfile.close();
 	if (DEMO==0) {
