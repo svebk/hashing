@@ -162,7 +162,15 @@ int main(int argc, char** argv){
 	feature.create(top_feature,feature_dim,CV_32F);
 
 	vector<ifstream*> read_in_compfeatures;
+	vector<ifstream*> read_in_features;
 	vector<ifstream*> read_in_compidx;
+	int status = 0;
+    status = fill_vector_files(read_in_features,update_feature_files);
+    if (status==-1) {
+        std::cout << "Could not load features properly. Exiting." << std::endl;
+        // TODO: We should clean here
+        return -1;
+    }
 	int status = 0;
     status = fill_vector_files(read_in_compfeatures,update_compfeature_files);
     if (status==-1) {
@@ -327,12 +335,14 @@ int main(int argc, char** argv){
 	if (DEMO==0) {
 		outputfile_hamming.close();
 	}
-	read_in.close();
+	
 	for (int i = 1; i<data_nums.size();i++)
 	{
 		read_in_compfeatures[i]->close();
+		read_in_features[i]->close();
 		read_in_compidx[i]->close();
 		delete read_in_compfeatures[i];
+		delete read_in_features[i];
 		delete read_in_compidx[i];
 	}
 
