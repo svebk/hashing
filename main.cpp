@@ -12,7 +12,7 @@ using namespace std;
 using namespace cv;
 
 #define DEMO 1
-#define INIT_FEAT 0
+#define INIT_FEAT 1
 
 template<class ty>
 void normalize(ty *X, size_t dim)
