@@ -104,7 +104,9 @@ unsigned long long int fill_data_nums(vector<string>& update_hash_files, vector<
     {
         data_nums.push_back((unsigned long long int)filesize(update_hash_files[i])*8/bit_num);
         data_num += data_nums[i];
+	std::cout << "We have a " << data_nums[i] << " features in file " << update_hash_files[i] << std::endl;
     }
+    std::cout << "We have a total of " << data_num << " features." << std::endl;
     return data_num;
 }
 
@@ -193,7 +195,13 @@ int get_n_features(string udpate_fn, int* query_ids, int query_num, int norm, in
         std::cout << "Looking for feature #" << query_ids[i] << std::endl;
         // BEWARE: we consider here ids are python/db, so in C they are ids+1...
         // TODO: maybe define a flag python id or not
-        get_onefeatcomp(query_ids[i]-1,read_size,accum,read_in_compfeatures,read_in_compidx,feature_cp);
+        status = get_onefeatcomp(query_ids[i]-1,read_size,accum,read_in_compfeatures,read_in_compidx,feature_cp);
+	if (status==-1) {
+        	std::cout << "Could not load compressed feature " << query_ids[i]-1 << ". Exiting." << std::endl;
+        	// TODO: We should clean here
+        	return -1;
+   	}
+
         feature_cp +=read_size;
     }
     

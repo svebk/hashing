@@ -109,17 +109,10 @@ int main(int argc, char** argv){
     int * accum = new int[data_nums.size()];
     fill_accum(data_nums,accum);
 	int top_feature=(int)ceil(data_num*ratio);
-
+	std::cout << "Will retrieve the top " << top_feature << " features." << std::endl;
 	//std::cout << "Loading itq..." << std::endl;
-	read_in.open(itq_name,ios::in|ios::binary);
-	if (!read_in.is_open())
-	{
-		std::cout << "Cannot load the itq model!" << std::endl;
-		return -1;
-	}
 	Mat itq(data_num,int_num,CV_32SC1);
-	read_size=0;
-	char * read_pos = (char*)itq.data+read_size;
+	char * read_pos = (char*)itq.data;
 	for (int i=0;i<update_hash_files.size();i++)
 	{
 		read_in.open(update_hash_files[i],ios::in|ios::binary);
@@ -254,8 +247,8 @@ int main(int argc, char** argv){
 		read_size = sizeof(float)*feature_dim;
 		for (;i<top_feature;i++)
 		{
-			//status = get_onefeatcomp(hamming[i].second,read_size,accum,read_in_compfeatures,read_in_compidx,feature_p);
-			status = get_onefeat(hamming[i].second,read_size,accum,read_in_features,feature_p);
+			status = get_onefeatcomp(hamming[i].second,read_size,accum,read_in_compfeatures,read_in_compidx,feature_p);
+			//status = get_onefeat(hamming[i].second,read_size,accum,read_in_features,feature_p);
 			if (status==-1) {
         		std::cout << "Could not get feature " << hamming[i].second << ". Exiting." << std::endl;
         		// TODO: We should clean here
