@@ -175,21 +175,22 @@ int main(int argc, char** argv){
 			data_num +=data_nums[i+1];
 		} else {
 			data_num +=data_nums[i];
+			std::cout << "We have a " << data_nums[i] << " features in file " << update_hash_files[i] << std::endl;
 		}
 	}
-
+	std::cout << "We have a total of " << data_num << " features." << std::endl;
 	int top_feature=(int)ceil(data_num*ratio);
-
+	std::cout << "We will get " << top_feature << " features." << std::endl;
 	//std::cout << "Loading itq..." << std::endl;
-	read_in.open(itq_name,ios::in|ios::binary);
-	if (!read_in.is_open())
-	{
-		std::cout << "Cannot load the itq model!" << std::endl;
-		return -1;
-	}
 	Mat itq(data_num,int_num,CV_32SC1);
 	read_size=0;
 	if (INIT_FEAT) {
+        read_in.open(itq_name,ios::in|ios::binary);
+        if (!read_in.is_open())
+        {
+                std::cout << "Cannot load the itq model!" << std::endl;
+                return -1;
+        }
 	read_size = sizeof(int)*data_nums[0]*int_num;
 	read_in.read((char*)itq.data, read_size);
 	read_in.close();
@@ -203,7 +204,11 @@ int main(int argc, char** argv){
 			std::cout << "Cannot load the itq updates! File "<< update_hash_files[i] << std::endl;
 			return -1;
 		}
-		read_size = sizeof(int)*data_nums[i+1]*int_num;
+		if  (INIT_FEAT) {
+			read_size = sizeof(int)*data_nums[i+1]*int_num;
+		} else {
+			read_size = sizeof(int)*data_nums[i]*int_num;
+		}
 		read_in.read(read_pos, read_size);
 		read_in.close();
 		read_pos +=read_size;
@@ -278,12 +283,20 @@ int main(int argc, char** argv){
 		
 		feature.create(top_feature,feature_dim,CV_32F);
 		read_size = sizeof(float)*feature_dim;
-		read_in_features.push_back(&read_in);
+		if (INIT_FEAT) {
+			read_in_features.push_back(&read_in);
+		}
+		int pos=0;
 		for (int i=0;i<update_feature_files.size();i++)
 		{
 			read_in_features.push_back(new ifstream);
-			read_in_features[i+1]->open(update_feature_files[i],ios::in|ios::binary);
-			if (!read_in_features[i+1]->is_open())
+			if (INIT_FEAT) {
+				pos=i+1;
+			} else {
+				pos=i;
+			}
+			read_in_features[pos]->open(update_feature_files[i],ios::in|ios::binary);
+			if (!read_in_features[pos]->is_open())
 			{
 				std::cout << "Cannot load the feature updates!" << std::endl;
 				return -1;
