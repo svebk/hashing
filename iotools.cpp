@@ -75,7 +75,7 @@ int get_onefeatcomp(int query_id, size_t read_size, int* accum, vector<ifstream*
     file_id = get_file_pos(accum, (int)read_in_compidx.size(), query_id, new_pos);
     if (file_id==-1)
         return -1;
-    std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
+    //std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
     read_in_compidx[file_id]->seekg((unsigned long long int)(new_pos)*idx_size);
     read_in_compidx[file_id]->read((char*)&start_feat, idx_size);
     read_in_compidx[file_id]->read((char*)&end_feat, idx_size);
@@ -92,7 +92,7 @@ int get_onefeat(int query_id, size_t read_size, int* accum, vector<ifstream*>& r
     file_id = get_file_pos(accum, (int)read_in_features.size(), query_id, new_pos);
     if (file_id==-1)
         return -1;
-    std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
+    //std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
     read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*read_size);
     read_in_features[file_id]->read(feature_cp, read_size);    
     return 0;

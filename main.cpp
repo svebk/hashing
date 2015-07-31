@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 
 	// hardcoded
 	int feature_dim = 4096;
-	float ratio = 0.01f;
+	float ratio = 0.001f;
 	int bit_num = 256;
 	int norm = true;
 	if (argc>2)
