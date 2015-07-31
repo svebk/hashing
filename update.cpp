@@ -1,5 +1,5 @@
 #include "header.h"
-#include <omp.h>
+//#include <omp.h>
 //#include <vl/generic.h>
 
 #include <opencv2/opencv.hpp>
@@ -55,9 +55,7 @@ int main(int argc, char** argv){
 
 		return -1;
 	}
-	omp_set_num_threads(omp_get_max_threads());
-
-
+	//omp_set_num_threads(omp_get_max_threads());
 	// hardcoded
 	int feature_dim = 4096;
 	int bit_num = 256;
