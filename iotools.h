@@ -6,6 +6,7 @@
 using namespace std;
 
 // This is in header
+extern string update_files_list;
 extern string update_hash_prefix;
 extern string update_feature_prefix;
 extern string update_compfeature_prefix;

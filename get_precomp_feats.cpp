@@ -51,9 +51,7 @@ int main(int argc, char** argv){
 	read_size = sizeof(float)*feature_dim;
 	char* feature_cp = (char*)feature;
 
-	string udpate_fn = "update_list.txt";
-
-	int status = get_n_features(udpate_fn,query_ids,query_num,norm,bit_num,read_size,feature_cp);
+	int status = get_n_features(update_files_list,query_ids,query_num,norm,bit_num,read_size,feature_cp);
 	if (status==-1) {
 		std::cout << "Could not get features. Exiting." << std::endl;
         // TODO: We should clean here

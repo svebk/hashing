@@ -78,7 +78,7 @@ int main(int argc, char** argv){
 	//config update
 	string line;
 	vector<string> update_hash_files;
-	vector<string> update_feature_files;
+	//vector<string> update_feature_files;
 	vector<string> update_compfeature_files;
    	vector<string> update_compidx_files;
 	string update_feature_suffix = "" + str_norm;
@@ -89,7 +89,7 @@ int main(int argc, char** argv){
 	{
 		update_hash_suffix = "_" + itq_name;
 	}
-	ifstream fu("update_list.txt",ios::in);
+	ifstream fu(update_files_list.c_str(),ios::in);
 	if (!fu.is_open())
 	{
 		std::cout << "no update" << std::endl;
@@ -98,7 +98,7 @@ int main(int argc, char** argv){
 	{
 		while (getline(fu, line)) {
 			update_hash_files.push_back(update_hash_prefix+line+update_hash_suffix);
-			update_feature_files.push_back(update_feature_prefix+line+update_feature_suffix);
+			//update_feature_files.push_back(update_feature_prefix+line+update_feature_suffix);
 			update_compfeature_files.push_back(update_compfeature_prefix+line+update_compfeature_suffix);
 			update_compidx_files.push_back(update_compidx_prefix+line+update_compidx_suffix);
 		}
@@ -155,15 +155,15 @@ int main(int argc, char** argv){
 	feature.create(top_feature,feature_dim,CV_32F);
 
 	vector<ifstream*> read_in_compfeatures;
-	vector<ifstream*> read_in_features;
 	vector<ifstream*> read_in_compidx;
 	int status = 0;
+	/*vector<ifstream*> read_in_features;
     status = fill_vector_files(read_in_features,update_feature_files);
     if (status==-1) {
         std::cout << "Could not load features properly. Exiting." << std::endl;
         // TODO: We should clean here
         return -1;
-    }
+    }*/
     status = fill_vector_files(read_in_compfeatures,update_compfeature_files);
     if (status==-1) {
         std::cout << "Could not load compressed features properly. Exiting." << std::endl;
@@ -331,10 +331,10 @@ int main(int argc, char** argv){
 	for (int i = 1; i<data_nums.size();i++)
 	{
 		read_in_compfeatures[i]->close();
-		read_in_features[i]->close();
+		//read_in_features[i]->close();
 		read_in_compidx[i]->close();
 		delete read_in_compfeatures[i];
-		delete read_in_features[i];
+		//delete read_in_features[i];
 		delete read_in_compidx[i];
 	}
 

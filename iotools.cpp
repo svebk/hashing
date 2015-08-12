@@ -104,7 +104,7 @@ unsigned long long int fill_data_nums(vector<string>& update_hash_files, vector<
     {
         data_nums.push_back((unsigned long long int)filesize(update_hash_files[i])*8/bit_num);
         data_num += data_nums[i];
-	std::cout << "We have a " << data_nums[i] << " features in file " << update_hash_files[i] << std::endl;
+	//std::cout << "We have a " << data_nums[i] << " features in file " << update_hash_files[i] << std::endl;
     }
     std::cout << "We have a total of " << data_num << " features." << std::endl;
     return data_num;
