@@ -28,7 +28,7 @@ bool comparatorf ( const mypairf & l, const mypairf & r)
 int main(int argc, char** argv){
 	double t[2]; // timing
 	t[0] = get_wall_time(); // Start Time
-	float runtimes[6] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+	float runtimes[7] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 	if (argc < 2){
 		cout << "Usage: hashing feature_file_name [hashing_bits post_ranking_ratio nomarlize_features read_threshold]" << std::endl;
 
@@ -74,6 +74,9 @@ int main(int argc, char** argv){
 	read_in.read((char*)query_mat.data, read_size);
 	std::cout << "Read " << read_size <<  " bytes for " << query_num << " queries." << std::endl;
 	read_in.close();
+	// 1. Time reading query
+	runtimes[0]=(float)(get_wall_time() - t[0]);
+	t[1] = get_wall_time();
 
 	//config update
 	string line;
@@ -110,6 +113,10 @@ int main(int argc, char** argv){
     fill_accum(data_nums,accum);
 	int top_feature=(int)ceil(data_num*ratio);
 	std::cout << "Will retrieve the top " << top_feature << " features." << std::endl;
+	// 2. Time reading files list
+	runtimes[1]=(float)(get_wall_time() - t[1]);
+	t[1] = get_wall_time();
+
 	//std::cout << "Loading itq..." << std::endl;
 	Mat itq(data_num,int_num,CV_32SC1);
 	char * read_pos = (char*)itq.data;
@@ -149,7 +156,6 @@ int main(int argc, char** argv){
 	read_in.read((char*)mvec.data, read_size);
 	read_in.close();
 
-	
 	// Initializing features structures and files streams
 	Mat feature;
 	feature.create(top_feature,feature_dim,CV_32F);
@@ -176,8 +182,8 @@ int main(int argc, char** argv){
         // TODO: We should clean here
         return -1;
     }
-
-	runtimes[0]=(float)(get_wall_time() - t[0]);
+	// 3. Time filling files structures
+	runtimes[2]=(float)(get_wall_time() - t[1]);
 
 	//hashing init
 	t[1]=get_wall_time();
@@ -191,6 +197,7 @@ int main(int argc, char** argv){
 	mvec = repeat(mvec, query_num,1);
 	Mat query_hash = query_mat_double*W-mvec;
 	unsigned int * query_all = new unsigned int[int_num*query_num];
+	// What is this doing?
 	for  (int k=0;k<query_num;k++)
 	{
 		for (int i=0;i<int_num;i++)
@@ -215,16 +222,17 @@ int main(int argc, char** argv){
 	}
 	unsigned int * query = query_all;
 	float * query_feature = (float*)query_mat.data;
-	runtimes[1]=(float)(get_wall_time() - t[1]);
+	// 4. Get query hash code(s)
+	runtimes[3]=(float)(get_wall_time() - t[1]);
 
 	// Parallelize this for batch processing.
 	// Beware of feature.data manipulation
 	for  (int k=0;k<query_num;k++)
 	{
+		t[1] = get_wall_time();
 		std::cout <<  "Looking for similar images of query #" << k+1 << std::endl;
 		//hashing
 		unsigned int * hash_data= (unsigned int*)itq.data;
-		t[1]=get_wall_time();
 		for (int i=0;i<data_num;i++)
 		{
 			hamming[i] = mypair(0,i);
@@ -237,10 +245,8 @@ int main(int argc, char** argv){
 		}
 		std::sort(hamming.begin(),hamming.end(),comparator);
 		query += int_num;
-		runtimes[2]+=(float)(get_wall_time() - t[1]);
 
 		//read needed feature
-		t[1]=get_wall_time();
 		char* feature_p = (char*)feature.data;
 		int i = 0;
 		int status = 0;
@@ -257,7 +263,8 @@ int main(int argc, char** argv){
 			feature_p +=read_size;
 		}
 		cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
-		runtimes[0]+=(float)(get_wall_time() - t[1]);
+		// 5. Hamming distances (accumulate for all queries)
+		runtimes[4]+=(float)(get_wall_time() - t[1]);
 
 		//post ranking
 		t[1]=get_wall_time();
@@ -298,10 +305,9 @@ int main(int argc, char** argv){
 		}
 		std::sort(postrank.begin(),postrank.end(),comparatorf);
 		query_feature +=feature_dim;
-		runtimes[3]+=(float)(get_wall_time() - t[1]);
-		//cout << postrank[0].second << std::endl;
-		//output
-		t[1]=get_wall_time();
+		// 6. Reranking (accumulate for all queries)
+		runtimes[5]+=(float)(get_wall_time() - t[1]);
+
 		for (int i=0;i<top_feature;i++) {
 			outputfile << postrank[i].second << ' ';
 			if (DEMO==0) {
@@ -318,9 +324,8 @@ int main(int argc, char** argv){
 		if (DEMO==0) {
 			outputfile_hamming << endl;
 		}
-		runtimes[4]+=(float)(get_wall_time() - t[1]);
 	}
-
+	t[1] = get_wall_time();
 	delete[] accum;
 	delete[] query_all;
 	outputfile.close();
@@ -337,12 +342,24 @@ int main(int argc, char** argv){
 		//delete read_in_features[i];
 		delete read_in_compidx[i];
 	}
+	// 7. Time cleaning
+	runtimes[6]+=(float)(get_wall_time() - t[1]);
 
-	cout << "loading (seconds): " << runtimes[0] << std::endl;
-	cout << "hashing init (seconds): " << runtimes[1] << std::endl;
-	cout << "hashing (seconds): " << runtimes[2] << std::endl;
-	cout << "post ranking (seconds): " << runtimes[3] << std::endl;
-	cout << "output (seconds): " << runtimes[4] << std::endl;
-	cout << "total time (seconds): " << (float)(get_wall_time() - t[0]) << std::endl;
+	// 1. Time reading query
+	cout << "Time reading query (seconds): " << runtimes[0] << std::endl;
+	// 2. Time reading files list
+	cout << " Time reading files list (seconds): " << runtimes[1] << std::endl;
+	// 3. Time filling files structures
+	cout << "Time filling files structures (seconds): " << runtimes[2] << std::endl;
+	// 4. Time gettting query hash code(s)
+	cout << "Time gettting query hash code(s) (seconds): " << runtimes[3] << std::endl;
+	// 5. Hamming distances (accumulate for all queries)
+	cout << "Time hamming distances computation (accumulated for all queries) (seconds): " << runtimes[4] << std::endl;
+	// 6. Reranking (accumulate for all queries)
+	cout << "Time reranking (accumulated for all queries) (seconds): " << runtimes[5] << std::endl;
+	// 7. Time cleaning
+	cout << "Time cleaning (seconds): " << runtimes[6] << std::endl;
+	// 8. Total
+	cout << "Total time (seconds): " << (float)(get_wall_time() - t[0]) << std::endl;
 	return 0;
 }
