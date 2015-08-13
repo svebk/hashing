@@ -13,7 +13,7 @@ int compress_onefeat(char * in, char * comp, int fsize) {
     defstream.next_in = (Bytef *)in; // input char array
     defstream.avail_out = (uInt)fsize; // size of output
     defstream.next_out = (Bytef *)comp; // output char array
-    
+
     // the actual compression work.
     deflateInit(&defstream, Z_BEST_COMPRESSION);
     deflate(&defstream, Z_FINISH);
@@ -31,7 +31,7 @@ int decompress_onefeat(char * in, char * comp, int compsize, int fsize) {
     infstream.next_in = (Bytef *)in; // input char array
     infstream.avail_out = (uInt)fsize; // size of output
     infstream.next_out = (Bytef *)comp; // output char array
-    
+
     // the actual de-compression work.
     inflateInit(&infstream);
     inflate(&infstream, Z_NO_FLUSH);
@@ -43,12 +43,12 @@ int decompress_onefeat(char * in, char * comp, int compsize, int fsize) {
 std::ifstream::pos_type filesize(std::string filename)
 {
 	std::ifstream in(filename, std::ios::ate | std::ios::binary);
-	return in.tellg(); 
+	return in.tellg();
 }
 
 int get_file_pos(int * accum, int nb_files, int query, int & res)
 {
-    int file_id = 0;    
+    int file_id = 0;
     while (query >= accum[file_id] && file_id<nb_files)
     {
         file_id++;
@@ -94,7 +94,7 @@ int get_onefeat(int query_id, size_t read_size, int* accum, vector<ifstream*>& r
         return -1;
     //std::cout << "Feature found in file "  << file_id << " at pos " << new_pos << std::endl;
     read_in_features[file_id]->seekg((unsigned long long int)(new_pos)*read_size);
-    read_in_features[file_id]->read(feature_cp, read_size);    
+    read_in_features[file_id]->read(feature_cp, read_size);
     return 0;
 }
 
@@ -113,13 +113,14 @@ unsigned long long int fill_data_nums(vector<string>& update_hash_files, vector<
 int fill_vector_files(vector<ifstream*>& read_in, vector<string>& update_files){
     for (int i=0;i<update_files.size();i++)
     {
-        read_in.push_back(new ifstream);
-        read_in[i]->open(update_files[i],ios::in|ios::binary);
+	read_in.push_back(new ifstream(update_files[i],ios::in|ios::binary));
+	/*read_in.push_back(new ifstream);
+	read_in[i]->open(update_files[i],ios::in|ios::binary);*/
         if (!read_in[i]->is_open())
             {
                 std::cout << "Cannot load the file " << update_files[i] << std::endl;
                 return -1;
-            } 
+            }
     }
     return 0;
 }

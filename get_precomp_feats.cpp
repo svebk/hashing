@@ -58,7 +58,7 @@ int main(int argc, char** argv){
         return -1;
     }
 	// write out features to out_file
-	cout << "Will write feature to " << out_file << endl;
+	//cout << "Will write feature to " << out_file << endl;
 	ofstream output(out_file,ofstream::binary);
 	feature_cp = (char*)feature;
 	for (int i = 0; i<query_num; i++) {
@@ -72,7 +72,7 @@ int main(int argc, char** argv){
 	delete[] query_ids;
 	delete[] feature;
 
-	cout << "total time (seconds): " << (float)(get_wall_time() - t[0]) << std::endl;
+	cout << "[get_precomp_feats] Total time (seconds): " << (float)(get_wall_time() - t[0]) << std::endl;
 	return 0;
 }
 

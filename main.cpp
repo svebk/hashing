@@ -61,7 +61,7 @@ int main(int argc, char** argv){
 	string mvec_name = "mvec" + str_norm + "_" + bit_string;
 
 	//read in query
-	int	query_num = (int)filesize(argv[1])/4/feature_dim;
+	int query_num = (int)filesize(argv[1])/4/feature_dim;
 	std::cout << "Hashing for " << query_num << " queries." << std::endl;
 	ifstream read_in(argv[1],ios::in|ios::binary);
 	if (!read_in.is_open())
@@ -108,9 +108,9 @@ int main(int argc, char** argv){
 	}
 	// read in itq
 	vector<unsigned long long int> data_nums;
-    unsigned long long int data_num = fill_data_nums(update_hash_files,data_nums,bit_num);
-    int * accum = new int[data_nums.size()];
-    fill_accum(data_nums,accum);
+	unsigned long long int data_num = fill_data_nums(update_hash_files,data_nums,bit_num);
+	int * accum = new int[data_nums.size()];
+ 	 fill_accum(data_nums,accum);
 	int top_feature=(int)ceil(data_num*ratio);
 	std::cout << "Will retrieve the top " << top_feature << " features." << std::endl;
 	// 2. Time reading files list
@@ -132,7 +132,7 @@ int main(int argc, char** argv){
 		read_in.read(read_pos, read_size);
 		read_in.close();
 		read_pos +=read_size;
-	} 
+	}
 
 	read_in.open(W_name,ios::in|ios::binary);
 	if (!read_in.is_open())
@@ -155,6 +155,9 @@ int main(int argc, char** argv){
 	read_size = sizeof(double)*bit_num;
 	read_in.read((char*)mvec.data, read_size);
 	read_in.close();
+	// 3.1 Time reading all hashcodes
+	runtimes[7]=(float)(get_wall_time() - t[1]);
+	t[1] = get_wall_time();
 
 	// Initializing features structures and files streams
 	Mat feature;
@@ -164,25 +167,25 @@ int main(int argc, char** argv){
 	vector<ifstream*> read_in_compidx;
 	int status = 0;
 	/*vector<ifstream*> read_in_features;
-    status = fill_vector_files(read_in_features,update_feature_files);
-    if (status==-1) {
-        std::cout << "Could not load features properly. Exiting." << std::endl;
-        // TODO: We should clean here
-        return -1;
-    }*/
-    status = fill_vector_files(read_in_compfeatures,update_compfeature_files);
-    if (status==-1) {
-        std::cout << "Could not load compressed features properly. Exiting." << std::endl;
-        // TODO: We should clean here
-        return -1;
-    }
-    status = fill_vector_files(read_in_compidx,update_compidx_files);
-    if (status==-1) {
-        std::cout << "Could not load compressed indices properly. Exiting." << std::endl;
-        // TODO: We should clean here
-        return -1;
-    }
-	// 3. Time filling files structures
+	status = fill_vector_files(read_in_features,update_feature_files);
+	if (status==-1) {
+          std::cout << "Could not load features properly. Exiting." << std::endl;
+          // TODO: We should clean here
+          return -1;
+	}*/
+	status = fill_vector_files(read_in_compfeatures,update_compfeature_files);
+	if (status==-1) {
+          std::cout << "Could not load compressed features properly. Exiting." << std::endl;
+          // TODO: We should clean here
+          return -1;
+	}
+	status = fill_vector_files(read_in_compidx,update_compidx_files);
+	if (status==-1) {
+          std::cout << "Could not load compressed indices properly. Exiting." << std::endl;
+          // TODO: We should clean here
+          return -1;
+	}
+	// 3.2 Time filling comp files structures
 	runtimes[2]=(float)(get_wall_time() - t[1]);
 
 	//hashing init
@@ -245,8 +248,11 @@ int main(int argc, char** argv){
 		}
 		std::sort(hamming.begin(),hamming.end(),comparator);
 		query += int_num;
+		// 5. Hamming distances (accumulate for all queries)
+                runtimes[4]+=(float)(get_wall_time() - t[1]);
 
-		//read needed feature
+		//read needed feature for post ranking
+                t[1]=get_wall_time();
 		char* feature_p = (char*)feature.data;
 		int i = 0;
 		int status = 0;
@@ -263,11 +269,7 @@ int main(int argc, char** argv){
 			feature_p +=read_size;
 		}
 		cout<<"Biggest hamming distance is: "<<hamming[i].first<<endl;
-		// 5. Hamming distances (accumulate for all queries)
-		runtimes[4]+=(float)(get_wall_time() - t[1]);
 
-		//post ranking
-		t[1]=get_wall_time();
 		float* data_feature;
 		if (norm)
 		{
@@ -282,8 +284,7 @@ int main(int argc, char** argv){
 				for (int j=0;j<feature_dim;j++)
 				{
 					postrank[i].first-=query_feature[j]*data_feature[j];
-				}// Shouldn't we multiply by 2 to get the real euclidean distance value?...
-
+				}
 			}
 		}
 		else
@@ -332,12 +333,14 @@ int main(int argc, char** argv){
 	if (DEMO==0) {
 		outputfile_hamming.close();
 	}
-	
+
 	for (int i = 1; i<data_nums.size();i++)
 	{
-		read_in_compfeatures[i]->close();
+		if (read_in_compfeatures[i]->is_open())
+		    read_in_compfeatures[i]->close();
 		//read_in_features[i]->close();
-		read_in_compidx[i]->close();
+		if (read_in_compidx[i]->is_open())
+		    read_in_compidx[i]->close();
 		delete read_in_compfeatures[i];
 		//delete read_in_features[i];
 		delete read_in_compidx[i];
@@ -348,9 +351,10 @@ int main(int argc, char** argv){
 	// 1. Time reading query
 	cout << "Time reading query (seconds): " << runtimes[0] << std::endl;
 	// 2. Time reading files list
-	cout << " Time reading files list (seconds): " << runtimes[1] << std::endl;
+	cout << "Time reading files list (seconds): " << runtimes[1] << std::endl;
 	// 3. Time filling files structures
-	cout << "Time filling files structures (seconds): " << runtimes[2] << std::endl;
+	cout << "Time read DB hash codes (seconds): " << runtimes[7] << std::endl;
+	cout << "Time filling comp files structures (seconds): " << runtimes[2] << std::endl;
 	// 4. Time gettting query hash code(s)
 	cout << "Time gettting query hash code(s) (seconds): " << runtimes[3] << std::endl;
 	// 5. Hamming distances (accumulate for all queries)
