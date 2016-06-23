@@ -1,5 +1,5 @@
 # hashing
-hashing is released under BSD. Auther: Tao Chen, generalmilk@gmail.com
+hashing is released under BSD. Author: Tao Chen, generalmilk@gmail.com
 
 1. Compling:
 make
